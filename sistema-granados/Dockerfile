@@ -32,9 +32,11 @@ RUN printf '%s\n' \
 ENV PORT=8085
 EXPOSE ${PORT}
 
+# DB URL is NOT baked into the image: SPRING_DATASOURCE_URL (env) overrides
+# application-prod.properties. Local Docker sets it in docker-compose.yml;
+# Render injects SPRING_DATASOURCE_HOST/PORT/DBNAME/USERNAME/PASSWORD.
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError" \
     TZ=America/Guatemala \
-    SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/sistema_granados \
     APP_STORAGE_UPLOADS=/data/uploads \
     APP_STORAGE_GENERADOS=/data/generados
 

@@ -22,7 +22,8 @@ services:
         value: "10000"
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      # SPRING_DATASOURCE_URL is built at runtime from the individual vars below
+      # JDBC URL is built in application-prod.properties from the vars below.
+      # Do NOT set SPRING_DATASOURCE_URL here or in the Dockerfile — it overrides prod profile.
       # (Render's connectionURI uses postgres://... which Spring cannot use directly)
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
