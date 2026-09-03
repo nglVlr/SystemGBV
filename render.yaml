@@ -22,12 +22,8 @@ services:
         value: "10000"
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      - key: SPRING_DATASOURCE_URL
-        fromDatabase:
-          name: sistema-granados-db
-          property: connectionURI
-        # Render genera una URI tipo postgres://user:pass@host/db
-        # Spring necesita jdbc:postgresql://... — ver nota abajo.
+      # SPRING_DATASOURCE_URL is built at runtime from the individual vars below
+      # (Render's connectionURI uses postgres://... which Spring cannot use directly)
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: sistema-granados-db
