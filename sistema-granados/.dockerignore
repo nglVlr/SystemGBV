@@ -1,0 +1,12 @@
+.git
+.idea
+.claude
+target
+out
+storage
+docs
+servidor
+*.iml
+*.md
+.DS_Store
+Thumbs.db

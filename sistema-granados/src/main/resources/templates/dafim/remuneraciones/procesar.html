@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Remuneraciones', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Remuneraciones</div>
+        <h1 th:text="${resultado == null} ? 'Procesar el mes' : 'Revisión del mes'">Procesar el mes</h1>
+        <div class="detalle" th:if="${resultado == null}">
+            Oficio de remuneraciones (Art. 10 num. 4 LAIP). Sube el SICOIN
+            del mes y las planillas 011 y 022. Nada se guarda en la base:
+            revisas y descargas el Excel.
+        </div>
+        <div class="detalle" th:unless="${resultado == null}">
+            Revisa la vista previa y las alertas. Las filas marcadas hay que
+            completar a mano. Descarga el Excel o empieza otro mes.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta" th:if="${resultado == null}">
+        <h2>Archivos del mes</h2>
+        <p class="subtitulo">El PDF de SICOIN es el mismo de compras. Las planillas son los reportes de personal 011 y 022.</p>
+
+        <form th:action="@{/dafim/remuneraciones/procesar}" method="post"
+              enctype="multipart/form-data"
+              data-procesando="Armando el oficio, esto puede tardar unos segundos...">
+
+            <div class="row g-2 form-mes-anio">
+                <div class="col-7">
+                    <label for="mes" class="form-label">Mes</label>
+                    <select id="mes" name="mes" class="form-select" required>
+                        <option th:each="m : ${meses}" th:value="${m.key}"
+                                th:text="${m.value}">MES</option>
+                    </select>
+                </div>
+                <div class="col-5">
+                    <label for="anio" class="form-label">Año</label>
+                    <input type="number" id="anio" name="anio" class="form-control"
+                           th:value="${anioActual}" min="2020" max="2100" required>
+                </div>
+            </div>
+
+            <div class="rejilla rejilla-2 mt-18">
+                <div class="campo-archivo">
+                    <label for="archivoSicoin" class="form-label">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        SICOIN
+                    </label>
+                    <input type="file" class="form-control" id="archivoSicoin"
+                           name="archivoSicoin" accept=".pdf" required
+                           data-nombre="nombreSicoin">
+                    <div class="ayuda" id="nombreSicoin" data-hint="Detalle de presupuesto ejecutado del mes.">
+                        Detalle de presupuesto ejecutado del mes.
+                    </div>
+                </div>
+
+                <div class="campo-archivo">
+                    <label for="planilla011Deposito" class="form-label">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        Planilla 011 depósito
+                        <span class="opcional">(recomendado)</span>
+                    </label>
+                    <input type="file" class="form-control" id="planilla011Deposito"
+                           name="planilla011Deposito" accept=".pdf"
+                           data-nombre="nombre011d">
+                    <div class="ayuda" id="nombre011d" data-hint="Planilla 011 con nombre / depositados.">
+                        Planilla 011 con nombre / depositados.
+                    </div>
+                </div>
+
+                <div class="campo-archivo">
+                    <label for="planilla011Cheque" class="form-label">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        Planilla 011 cheque
+                        <span class="opcional">(si hubo pago con cheque)</span>
+                    </label>
+                    <input type="file" class="form-control" id="planilla011Cheque"
+                           name="planilla011Cheque" accept=".pdf"
+                           data-nombre="nombre011c">
+                    <div class="ayuda" id="nombre011c" data-hint="Planilla 011 pagada con cheque.">
+                        Planilla 011 pagada con cheque.
+                    </div>
+                </div>
+
+                <div class="campo-archivo">
+                    <label for="planilla022" class="form-label">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        Planilla 022
+                        <span class="opcional">(si hay renglón 022)</span>
+                    </label>
+                    <input type="file" class="form-control" id="planilla022"
+                           name="planilla022" accept=".pdf"
+                           data-nombre="nombre022">
+                    <div class="ayuda" id="nombre022" data-hint="Planilla de personal 022.">
+                        Planilla de personal 022.
+                    </div>
+                </div>
+            </div>
+
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-gear"></i> Procesar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <th:block th:if="${resultado != null}">
+
+        <div class="rejilla rejilla-4 mb-16">
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Mes</div>
+                <div class="valor stat-valor-18"
+                     th:text="${meses.get(resultado.mes)} + ' ' + ${resultado.anio}">MES</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Personas</div>
+                <div class="valor numeros" th:text="${#lists.size(resultado.filas)}">0</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Total ingresos</div>
+                <div class="valor numeros"
+                     th:text="'Q' + ${#numbers.formatDecimal(resultado.totalIngresos, 1, 'COMMA', 2, 'POINT')}">Q0.00</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Líquido</div>
+                <div class="valor numeros"
+                     th:text="'Q' + ${#numbers.formatDecimal(resultado.totalLiquido, 1, 'COMMA', 2, 'POINT')}">Q0.00</div>
+                <div class="nota"
+                     th:text="'Descuentos Q' + ${#numbers.formatDecimal(resultado.totalDescuentos, 1, 'COMMA', 2, 'POINT')}"></div>
+            </div>
+        </div>
+
+        <details class="panel-desplegable" th:if="${!#lists.isEmpty(resultado.alertas)}">
+            <summary>
+                <i class="bi bi-flag" style="color:var(--ambar);"></i>
+                Alertas
+                <span class="insignia insignia-ambar"
+                      th:text="${#lists.size(resultado.alertas)}">0</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <p class="subtitulo">Planillas faltantes o personas de RRHH sin monto en los PDFs.</p>
+                <div class="acta">
+                    <div class="linea linea-rev" th:each="l : ${resultado.alertas}"
+                         th:text="${l}">alerta</div>
+                </div>
+            </div>
+        </details>
+
+        <div class="tarjeta">
+            <h2>Vista previa
+                <span class="insignia insignia-pino"
+                      th:text="${#lists.size(resultado.filas)}">0</span>
+            </h2>
+            <p class="subtitulo">Así queda el Excel. Las filas marcadas hay que completar a mano (sueldo vacío).</p>
+            <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(resultado.filas)}">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th scope="col">No.</th>
+                        <th scope="col">Reng.</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Cargo</th>
+                        <th scope="col">Dependencia</th>
+                        <th scope="col" class="monto">Sueldo / dietas</th>
+                        <th scope="col" class="monto">Ingresos</th>
+                        <th scope="col" class="monto">Descuentos</th>
+                        <th scope="col" class="monto">Líquido</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="f : ${resultado.filas}"
+                        th:classappend="${f.incompleta} ? 'fila-alerta'">
+                        <td class="numeros" th:text="${f.numero}">1</td>
+                        <td class="centrado">
+                            <span class="insignia insignia-neutra" th:text="${f.renglonExcel()}">011</span>
+                        </td>
+                        <td class="celda-proveedor" th:text="${f.nombre}" th:title="${f.nombre}">nombre</td>
+                        <td class="celda-desc" th:text="${f.cargo}">cargo</td>
+                        <td th:text="${f.dependencia}">dep</td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(f.sueldoBase + f.dietas, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(f.totalIngresos, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(f.descuentos, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(f.liquido, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="texto-suave sin-margen" th:if="${#lists.isEmpty(resultado.filas)}">
+                No se armó ninguna fila. Revisa que el SICOIN y las planillas
+                correspondan al mismo mes.
+            </p>
+        </div>
+
+        <div class="acciones-fila pegajosa">
+            <a th:href="@{/dafim/remuneraciones/procesar/excel}" class="btn-jade">
+                <i class="bi bi-file-earmark-excel"></i> Excel
+            </a>
+            <form th:action="@{/dafim/remuneraciones/procesar/nuevo}" method="post"
+                  class="sin-margen">
+                <button type="submit" class="btn-neutro">
+                    <i class="bi bi-x-lg"></i> Otro mes
+                </button>
+            </form>
+        </div>
+
+    </th:block>
+
+</div>
+</body>
+</html>

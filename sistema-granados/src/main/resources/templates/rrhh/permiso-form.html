@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Registrar permiso', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">RRHH · Permisos</div>
+        <h1>Registrar permiso</h1>
+        <div class="detalle">Queda pendiente hasta que RRHH lo apruebe. Solo personal activo. Si es por horas, llena ambas horas; si es por días, deja las horas vacías.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="aviso aviso-ambar" th:if="${sinPersonal}" role="alert">
+        <i class="bi bi-info-circle"></i>
+        <div>No hay personal activo. Primero agrega a alguien en
+            <a th:href="@{/rrhh/empleados}">Personal</a>.</div>
+    </div>
+
+    <div class="tarjeta" th:if="${!sinPersonal}">
+        <form th:action="@{/rrhh/permisos/guardar}" method="post" enctype="multipart/form-data"
+              data-procesando="Guardando permiso...">
+
+            <div class="rejilla rejilla-3">
+                <div class="campo">
+                    <label for="empleadoId" class="form-label">Empleado *</label>
+                    <select class="form-control" id="empleadoId" name="empleadoId" required>
+                        <option value="">-- seleccioná --</option>
+                        <option th:each="e : ${empleados}" th:value="${e.id}"
+                                th:text="${e.nombre} + (${#strings.isEmpty(e.cargo)} ? '' : ' · ' + ${e.cargo})">
+                        </option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="tipo" class="form-label">Tipo de permiso *</label>
+                    <select class="form-control" id="tipo" name="tipo" required>
+                        <option value="IGSS">Cita o suspension IGSS</option>
+                        <option value="PERSONAL" selected>Asunto personal</option>
+                        <option value="VACACIONES">Vacaciones</option>
+                        <option value="LUTO">Luto</option>
+                        <option value="MATERNIDAD">Maternidad / paternidad</option>
+                        <option value="ESTUDIO">Estudios</option>
+                        <option value="COMISION">Comision oficial</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="conGoce" class="form-label">Goce de salario</label>
+                    <select class="form-control" id="conGoce" name="conGoce">
+                        <option value="true" selected>Con goce</option>
+                        <option value="false">Sin goce</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="rejilla rejilla-4 mt-12">
+                <div class="campo">
+                    <label for="fechaInicio" class="form-label">Desde *</label>
+                    <input type="date" class="form-control" id="fechaInicio"
+                           name="fechaInicio" required th:value="${hoy}">
+                </div>
+                <div class="campo">
+                    <label for="fechaFin" class="form-label">Hasta</label>
+                    <input type="date" class="form-control" id="fechaFin" name="fechaFin">
+                    <div class="ayuda">vacío = un solo día. Si pones horas, se ignora este campo.</div>
+                </div>
+                <div class="campo">
+                    <label for="horaInicio" class="form-label">Hora inicio</label>
+                    <input type="time" class="form-control" id="horaInicio" name="horaInicio">
+                    <div class="ayuda">solo si es por horas</div>
+                </div>
+                <div class="campo">
+                    <label for="horaFin" class="form-label">Hora fin</label>
+                    <input type="time" class="form-control" id="horaFin" name="horaFin">
+                </div>
+            </div>
+
+            <div class="campo mt-12">
+                <label for="escaneado" class="form-label">Permiso físico escaneado (opcional)</label>
+                <input type="file" class="form-control" id="escaneado" name="escaneado"
+                       accept=".pdf,.jpg,.jpeg,.png">
+                <div class="ayuda">PDF o foto del papel firmado. Máximo 8 MB.</div>
+            </div>
+
+            <div class="campo mt-12">
+                <label for="motivo" class="form-label">Motivo</label>
+                <input type="text" class="form-control" id="motivo" name="motivo"
+                       maxlength="300"
+                       placeholder="Cita medica en el IGSS de Salama, consulta externa...">
+            </div>
+
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-calendar-plus"></i> Registrar permiso
+                </button>
+                <a th:href="@{/rrhh/permisos}" class="btn-neutro">Ver bandeja</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+</body>
+</html>

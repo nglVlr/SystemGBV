@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Probidad', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{normativa/_nav :: cascaron}"></div>
+
+    <div class="folio">
+        <div class="ceja">Normativa · Funcionarios</div>
+        <h1>Ley de Probidad</h1>
+        <div class="detalle">Responsabilidad de quienes manejan fondos y decisiones publicas.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <p class="norma-meta">Decreto 89-2002 · Congreso de la Republica de Guatemala</p>
+        <div class="texto-legal">
+            <p>
+                Quien administra bienes o fondos del municipio responde por su
+                uso. El sistema registra operaciones; no borra esa responsabilidad.
+            </p>
+
+            <h3>Que implica en DAFIM y RRHH</h3>
+            <ul>
+                <li>No procesar un mes «a ojo»: el cruce cheques / Guatecompras / SICOIN existe para dejar rastro.</li>
+                <li>Los apartados y las simulaciones de transferencia no son movimientos reales de SICOIN: no fingir que lo son.</li>
+                <li>Aprobar un permiso o crear un usuario deja quien lo hizo (sesion + bitacora de negocio donde aplique).</li>
+                <li>Conflicto de interes: no comprar a si mismo ni a parientes por la via de compras directas.</li>
+            </ul>
+
+            <h3>Usuarios del sistema</h3>
+            <p>
+                Roles separados (DAFIM, RRHH, superadmin) no son un capricho de
+                software: limitan quien toca nominas y quien toca cheques. El
+                superadmin no deberia usar la cuenta para operativa diaria.
+            </p>
+
+            <h3>Declaraciones y organos de control</h3>
+            <p>
+                Las declaraciones patrimoniales y los informes a Contraloria se
+                tramitan fuera de esta aplicacion. Aqui solo se recuerda que el
+                dato que se carga (PDF, Excel, NPG) puede ser evidencia.
+            </p>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

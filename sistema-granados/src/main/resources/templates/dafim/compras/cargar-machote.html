@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Cargar machote', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Carga historica</div>
+        <h1>Cargar machote</h1>
+        <div class="detalle">Excel de un mes ya trabajado a mano, para sumarlo al historial.</div>
+        <div class="filete"></div>
+    </div>
+
+    <!-- =========================== FORMULARIO ============================ -->
+    <div class="tarjeta" th:if="${pendiente == null}">
+        <form th:action="@{/dafim/compras/cargar-machote}" method="post"
+              enctype="multipart/form-data"
+              data-procesando="Leyendo el Excel...">
+
+            <div class="row g-3" style="max-width:430px; margin-bottom:6px;">
+                <div class="col-7">
+                    <label for="mes" class="form-label">Mes del machote</label>
+                    <select id="mes" name="mes" class="form-select" required>
+                        <option th:each="m : ${meses}" th:value="${m.key}"
+                                th:text="${m.value}">MES</option>
+                    </select>
+                </div>
+                <div class="col-5">
+                    <label for="anio" class="form-label">Anio</label>
+                    <input type="number" id="anio" name="anio" class="form-control"
+                           th:value="${anioActual}" min="2020" max="2100" required>
+                </div>
+            </div>
+
+            <div class="campo-archivo mt-18" style="max-width:560px;">
+                <label for="archivoMachote" class="form-label">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    Excel del mes (formato de 15 columnas)
+                </label>
+                <input type="file" class="form-control" id="archivoMachote"
+                       name="archivoMachote" accept=".xlsx,.xls" required
+                       data-nombre="nombreMachote">
+                <div class="ayuda" id="nombreMachote"
+                     data-hint="El mismo formato del informe: si el renglon viene vacio, el sistema lo infiere por la descripcion.">
+                    El mismo formato del informe: si el renglon viene vacio, el
+                    sistema lo infiere por la descripcion.
+                </div>
+            </div>
+
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-eye"></i> Leer y revisar antes de guardar
+                </button>
+                <a th:href="@{/dafim/compras}" class="btn-neutro">Volver</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- ========================== VISTA PREVIA =========================== -->
+    <th:block th:if="${pendiente != null}">
+
+        <div th:if="${pendiente.mesYaGuardado}" class="aviso aviso-ambar" role="alert">
+            <i class="bi bi-exclamation-circle"></i>
+            <div>
+                <strong th:text="${pendiente.mesNombre} + ' ' + ${pendiente.anio}">MES</strong>
+                ya esta guardado en la base de datos. Si confirmas, los registros
+                anteriores de ese mes se reemplazan por estos.
+            </div>
+        </div>
+
+        <div class="rejilla rejilla-4" style="margin-bottom:22px;">
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Mes a cargar</div>
+                <div class="valor" style="font-size:20px;"
+                     th:text="${pendiente.mesNombre} + ' ' + ${pendiente.anio}">MES</div>
+                <div class="nota" th:text="${pendiente.nombreArchivo}">archivo</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Filas leidas</div>
+                <div class="valor numeros" th:text="${#lists.size(pendiente.filas)}">0</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Monto total</div>
+                <div class="valor numeros"
+                     th:text="'Q' + ${#numbers.formatDecimal(pendiente.totalMonto, 1, 'COMMA', 2, 'POINT')}">Q0.00</div>
+            </div>
+        </div>
+
+        <div class="tarjeta">
+            <h2>Vista previa de las filas</h2>
+            <div class="tabla-envoltura scroll-alto">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Descripcion</th>
+                        <th class="centrado">Reng.</th>
+                        <th>Proveedor</th>
+                        <th>NIT</th>
+                        <th>NPG</th>
+                        <th class="monto">Monto Q</th>
+                        <th>Contrato</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="f, it : ${pendiente.filas}">
+                        <td class="numeros" th:text="${it.count}">1</td>
+                        <td class="celda-desc" th:text="${f.desc}">desc</td>
+                        <td class="centrado">
+                            <span class="insignia"
+                                  th:classappend="${f.renglon == '029'} ? 'insignia-pino' : 'insignia-neutra'"
+                                  th:text="${f.renglon}">029</span>
+                        </td>
+                        <td class="celda-proveedor" th:text="${f.proveedor}" th:title="${f.proveedor}">proveedor</td>
+                        <td class="numeros" th:text="${f.nit}">nit</td>
+                        <td class="numeros" th:text="${f.npg}">npg</td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(f.precio, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                        <td class="numeros" th:text="${f.contrato}">contrato</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="acciones-fila">
+            <form th:action="@{/dafim/compras/cargar-machote/confirmar}" method="post"
+                  class="sin-margen"
+                  data-procesando="Guardando el machote..."
+                  data-confirmar="Cargar este mes al historial y actualizar la BD?">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-database-check"></i> Confirmar la carga
+                </button>
+            </form>
+            <form th:action="@{/dafim/compras/cargar-machote/descartar}" method="post"
+                  class="sin-margen">
+                <button type="submit" class="btn-neutro">
+                    <i class="bi bi-x-lg"></i> Descartar
+                </button>
+            </form>
+        </div>
+
+    </th:block>
+
+</div>
+</body>
+</html>

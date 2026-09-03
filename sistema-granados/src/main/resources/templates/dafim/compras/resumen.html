@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Resumen de la BD', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Base de datos</div>
+        <h1>Resumen</h1>
+        <div class="detalle">Totales de todos los meses guardados.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="rejilla rejilla-4" style="margin-bottom:24px;">
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Pagos guardados</div>
+            <div class="valor numeros" th:text="${r.totalRegistros}">0</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Monto acumulado</div>
+            <div class="valor numeros"
+                 th:text="'Q' + ${#numbers.formatDecimal(r.totalMonto, 1, 'COMMA', 2, 'POINT')}">Q0</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Contratos 029</div>
+            <div class="valor numeros" th:text="${r.totalContratos}">0</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Proveedores</div>
+            <div class="valor numeros" th:text="${r.totalProveedores}">0</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Publicaciones NPG</div>
+            <div class="valor numeros" th:text="${r.totalPublicaciones}">0</div>
+        </div>
+    </div>
+
+    <div class="rejilla rejilla-2">
+        <div class="tarjeta sin-margen">
+            <h2>Meses guardados</h2>
+            <div class="tabla-envoltura" th:if="${!#lists.isEmpty(r.meses)}">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th>Mes</th>
+                        <th class="centrado">Pagos</th>
+                        <th class="monto">Monto Q</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="m : ${r.meses}">
+                        <td class="numeros" th:text="${m.mes}">01/2026</td>
+                        <td class="centrado numeros" th:text="${m.cantidad}">0</td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(m.monto, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="texto-suave sin-margen" th:if="${#lists.isEmpty(r.meses)}">
+                Aun no hay meses guardados. Procesa un mes o carga un machote.
+            </p>
+        </div>
+
+        <div class="tarjeta sin-margen">
+            <h2>Top 10 por monto acumulado</h2>
+            <div class="tabla-envoltura" th:if="${!#lists.isEmpty(r.top)}">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th>NIT</th>
+                        <th>Nombre</th>
+                        <th class="centrado">Pagos</th>
+                        <th class="monto">Monto Q</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="t : ${r.top}">
+                        <td class="numeros" th:text="${t.nit}">nit</td>
+                        <td th:text="${t.nombre}">nombre</td>
+                        <td class="centrado numeros" th:text="${t.pagos}">0</td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(t.monto, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="texto-suave sin-margen" th:if="${#lists.isEmpty(r.top)}">
+                Sin datos todavia.
+            </p>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

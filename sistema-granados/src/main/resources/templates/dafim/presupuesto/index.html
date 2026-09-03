@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Presupuesto', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>Resumen</h1>
+        <div class="detalle">Saldo de la carga activa de SICOIN, antes del cheque.</div>
+        <div class="filete"></div>
+    </div>
+
+    <!-- ===================== ESTADO VACIO (sin carga) ===================== -->
+    <div class="tarjeta vacio-modulo" th:if="${carga == null}">
+        <i class="bi bi-bank" aria-hidden="true"></i>
+        <h2>Aun no hay presupuesto cargado</h2>
+        <p class="subtitulo">
+            Sube el PDF de ejecucion de egresos en la pestania Cargas.
+        </p>
+        <a th:href="@{/dafim/presupuesto/cargar}" class="btn-jade">
+            <i class="bi bi-file-earmark-pdf"></i> Ir a Cargas
+        </a>
+    </div>
+
+    <th:block th:if="${carga != null}">
+
+        <!-- =========================== TOTALES ============================ -->
+        <div class="rejilla rejilla-4 mb-22">
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Vigente</div>
+                <div class="valor numeros"
+                     th:text="'Q ' + ${#numbers.formatDecimal(resumen.totalVigente, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                <div class="nota">presupuesto actual del ejercicio</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Devengado</div>
+                <div class="valor numeros"
+                     th:text="'Q ' + ${#numbers.formatDecimal(resumen.totalDevengado, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                <div class="nota">ya ejecutado en SICOIN</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Pagado</div>
+                <div class="valor numeros"
+                     th:text="'Q ' + ${#numbers.formatDecimal(resumen.totalPagado, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                <div class="nota">ya pagado en SICOIN</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Saldo</div>
+                <div class="valor numeros"
+                     th:text="'Q ' + ${#numbers.formatDecimal(resumen.saldoDisponible, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                <div class="nota">lo que aun se puede gastar</div>
+            </div>
+        </div>
+
+        <!-- ======================= EJECUCION GENERAL ======================= -->
+        <div class="tarjeta mb-22">
+            <h2><i class="bi bi-bar-chart"></i> Ejecucion general</h2>
+            <div class="barra-progreso grande">
+                <div class="relleno"
+                     th:classappend="${resumen.pctEjecucion > 90} ? 'nivel-agotado' : (${resumen.pctEjecucion >= 70} ? 'nivel-alerta' : 'nivel-ok')"
+                     th:style="'width:' + (${resumen.pctEjecucion > 100} ? 100 : ${resumen.pctEjecucion}) + '%'"></div>
+            </div>
+            <div class="progreso-pie"
+                 th:text="${resumen.pctEjecucion} + '% ejecutado'">0%</div>
+        </div>
+
+        <!-- ========================= CARGA ACTIVA ========================= -->
+        <div class="rejilla rejilla-3 mb-22">
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Periodo</div>
+                <div class="valor stat-17"
+                     th:text="(${carga.periodoDesde != null} ? ${#temporals.format(carga.periodoDesde,'dd/MM/yyyy')} : '?') + ' a ' + (${carga.periodoHasta != null} ? ${#temporals.format(carga.periodoHasta,'dd/MM/yyyy')} : '?')">periodo</div>
+                <div class="nota" th:text="'Ejercicio ' + ${carga.anio}">anio</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Archivo</div>
+                <div class="valor stat-archivo"
+                     th:text="${#strings.abbreviate(carga.nombreArchivo, 42)}">archivo.pdf</div>
+                <div class="nota" th:text="${carga.totalLineas} + ' lineas'">0</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Cargado por</div>
+                <div class="valor stat-17" th:text="${carga.usuario}">usuario</div>
+                <div class="nota">
+                    <time th:if="${carga.fechaCarga != null}"
+                          th:attr="data-fecha=${#temporals.formatISO(carga.fechaCarga)}"
+                          th:text="${#temporals.format(carga.fechaCarga,'dd/MM/yyyy HH:mm')}">fecha</time>
+                </div>
+            </div>
+        </div>
+
+        <p class="subtitulo nota-boletin" th:if="${cargaCaja != null}">
+            <i class="bi bi-cash-coin"></i>
+            Boletin de caja al
+            <strong th:text="${cargaCaja.fechaCorte != null} ? ${#temporals.format(cargaCaja.fechaCorte,'dd/MM/yyyy')} : '?'">fecha</strong>
+            · dinero real
+            <strong class="numeros"
+                    th:text="'Q ' + ${#numbers.formatDecimal(cargaCaja.totalNuevoSaldo ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</strong>
+            · detalle en Fuentes.
+        </p>
+        <p class="subtitulo nota-boletin" th:if="${cargaCaja == null}">
+            <i class="bi bi-cash-coin"></i>
+            Sin boletin de caja: subelo en Cargas para ver el dinero real por fuente.
+        </p>
+
+        <!-- ================= RENGLONES CERCA DE AGOTARSE =================== -->
+        <div class="tarjeta mb-22">
+            <h2><i class="bi bi-exclamation-circle"></i> Mas cerca de agotarse</h2>
+            <p class="subtitulo">Los 5 renglones con mayor porcentaje de ejecucion.</p>
+            <div class="tabla-envoltura" th:if="${!#lists.isEmpty(criticos)}">
+                <table class="tabla-datos tabla-zebra tabla-hover">
+                    <thead>
+                    <tr>
+                        <th class="centrado">Renglon</th>
+                        <th>Descripcion</th>
+                        <th class="monto">Saldo Q</th>
+                        <th class="col-ejecucion-lg">Ejecucion</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${criticos}">
+                        <td class="centrado">
+                            <a class="enlace-codigo" th:href="@{/dafim/presupuesto/renglones/{c}(c=${r.renglon})}">
+                                <strong th:text="${r.renglon}">000</strong>
+                            </a>
+                        </td>
+                        <td class="celda-desc" th:text="${r.descripcion}">descripcion</td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(r.saldoDisponible, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                        <td>
+                            <div class="barra-progreso">
+                                <div class="relleno"
+                                     th:classappend="${r.pctEjecucion > 90} ? 'nivel-agotado' : (${r.pctEjecucion >= 70} ? 'nivel-alerta' : 'nivel-ok')"
+                                     th:style="'width:' + (${r.pctEjecucion > 100} ? 100 : ${r.pctEjecucion}) + '%'"></div>
+                            </div>
+                            <div class="progreso-pie" th:text="${r.pctEjecucion} + '%'">0%</div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="subtitulo" th:if="${#lists.isEmpty(criticos)}">
+                No hay renglones con presupuesto vigente.
+            </p>
+        </div>
+
+    </th:block>
+
+</div>
+</body>
+</html>

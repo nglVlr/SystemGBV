@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Cargar NPGs', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Carga historica</div>
+        <h1>Cargar NPGs</h1>
+        <div class="detalle">PDFs de confirmacion, TXT de publicaciones (catalogo completo) o alta manual.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <form th:action="@{/dafim/compras/cargar-npgs}" method="post"
+              enctype="multipart/form-data"
+              data-procesando="Leyendo PDFs...">
+            <div class="campo-archivo" style="max-width:560px;">
+                <label for="archivos" class="form-label">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    PDFs de confirmacion o un ZIP
+                </label>
+                <input type="file" class="form-control" id="archivos" name="archivos"
+                       accept=".pdf,.zip" multiple required data-nombre="nombreArchivos">
+                <div class="ayuda" id="nombreArchivos"
+                     data-hint="Hasta 100 MB por archivo (varios PDFs o un ZIP).">Hasta 100 MB por archivo (varios PDFs o un ZIP).</div>
+            </div>
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-upload"></i> Procesar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="tarjeta">
+        <h2><i class="bi bi-file-earmark-text"></i> Catalogo TXT de Guatecompras</h2>
+        <p class="subtitulo">
+            El TXT con todas las publicaciones (enero a agosto, o el del mes).
+            Se guarda cada NPG para buscarlo despues, aunque no tenga cheque.
+        </p>
+        <form th:action="@{/dafim/compras/cargar-npgs/txt}" method="post"
+              enctype="multipart/form-data"
+              data-procesando="Guardando publicaciones...">
+            <div class="campo-archivo" style="max-width:560px;">
+                <label for="archivoTxt" class="form-label">
+                    <i class="bi bi-file-earmark-text"></i>
+                    TXT de publicaciones
+                </label>
+                <input type="file" class="form-control" id="archivoTxt" name="archivoTxt"
+                       accept=".txt" required data-nombre="nombreTxtCat">
+                <div class="ayuda" id="nombreTxtCat"
+                     data-hint="Exportacion de Guatecompras. Hasta 100 MB.">
+                    Exportacion de Guatecompras. Hasta 100 MB.
+                </div>
+            </div>
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-database-add"></i> Guardar catalogo
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ======================== INGRESO MANUAL ======================== -->
+    <div class="tarjeta">
+        <h2><i class="bi bi-pencil-square"></i> Ingreso manual</h2>
+        <p class="subtitulo">
+            Para cuando no tienes el PDF de confirmacion a la mano, o el PDF
+            viene en un formato que el sistema no logra leer.
+        </p>
+        <form th:action="@{/dafim/compras/cargar-npgs/manual}" method="post"
+              data-procesando="Guardando NPG...">
+            <div class="rejilla rejilla-3">
+                <div class="campo">
+                    <label for="npg" class="form-label">NPG *</label>
+                    <input type="text" class="form-control numeros" id="npg" name="npg"
+                           placeholder="E581998146" required
+                           pattern="[Ee]\d{8,10}" title="E seguida de 8 a 10 digitos">
+                </div>
+                <div class="campo">
+                    <label for="nit" class="form-label">NIT *</label>
+                    <input type="text" class="form-control numeros" id="nit" name="nit"
+                           placeholder="77132556" required
+                           pattern="\d{4,12}[Kk]?" title="Solo digitos, sin guiones (K final si aplica)">
+                </div>
+                <div class="campo">
+                    <label for="contrato" class="form-label">Contrato (opcional)</label>
+                    <input type="text" class="form-control numeros" id="contrato" name="contrato"
+                           placeholder="98-2026"
+                           pattern="\d{1,3}-\d{4}" title="numero-anio, ej. 98-2026">
+                </div>
+            </div>
+            <div class="campo mt-12">
+                <label for="nombre" class="form-label">Nombre del proveedor o contratista *</label>
+                <input type="text" class="form-control" id="nombre" name="nombre"
+                       placeholder="GARCIA,GARCIA,,ALBA,VIOLETA" required minlength="3">
+            </div>
+            <div class="campo mt-12">
+                <label for="descManual" class="form-label">Descripcion (opcional)</label>
+                <input type="text" class="form-control" id="descManual" name="descManual"
+                       maxlength="200"
+                       placeholder="Servicios tecnicos como conserje del Palacio Municipal...">
+            </div>
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-plus-circle"></i> Guardar NPG en la BD
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============================ RESULTADOS ============================ -->
+    <th:block th:if="${procesados != null}">
+
+        <div class="rejilla rejilla-4" style="margin-bottom:22px;">
+            <div class="tarjeta-stat">
+                <div class="etiqueta">PDFs procesados</div>
+                <div class="valor numeros" th:text="${procesados}">0</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Actualizados</div>
+                <div class="valor numeros" th:text="${actualizados}">0</div>
+                <div class="nota">personas que ya estaban en la BD</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Nuevos</div>
+                <div class="valor numeros" th:text="${nuevos}">0</div>
+                <div class="nota">personas agregadas a la BD</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Con problema</div>
+                <div class="valor numeros"
+                     th:text="${#lists.size(errores) + #lists.size(sinDatos)}">0</div>
+                <div class="nota">con error o sin NPG/NIT legible</div>
+            </div>
+        </div>
+
+        <div class="tarjeta" th:if="${!#lists.isEmpty(resultados)}">
+            <h2>NPGs cargados
+                <span class="insignia insignia-jade"
+                      th:text="${#lists.size(resultados)}">0</span>
+            </h2>
+            <div class="tabla-envoltura scroll-alto">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th>NIT</th>
+                        <th>Nombre</th>
+                        <th>NPG</th>
+                        <th>Contrato</th>
+                        <th>Archivo</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${resultados}">
+                        <td class="numeros" th:text="${r.nit}">nit</td>
+                        <td class="celda-proveedor" th:text="${r.nombre}" th:title="${r.nombre}">nombre</td>
+                        <td class="numeros" th:text="${r.npg}">npg</td>
+                        <td class="numeros"
+                            th:text="${#strings.isEmpty(r.contrato)} ? 'N/A' : ${r.contrato}">contrato</td>
+                        <td class="celda-archivo texto-suave texto-chico" th:text="${r.archivo}" th:title="${r.archivo}">pdf</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tarjeta" th:if="${!#lists.isEmpty(sinDatos)}">
+            <h2><i class="bi bi-question-circle" style="color:var(--ambar);"></i>
+                Sin NPG o NIT legible</h2>
+            <p class="subtitulo">
+                Estos PDFs se leyeron pero no traen los datos esperados. Revisa
+                que sean confirmaciones de publicacion.
+            </p>
+            <div class="acta">
+                <div class="linea linea-rev" th:each="n : ${sinDatos}" th:text="${n}">pdf</div>
+            </div>
+        </div>
+
+        <div class="tarjeta" th:if="${!#lists.isEmpty(errores)}">
+            <h2><i class="bi bi-x-circle" style="color:var(--rojo);"></i>
+                PDFs con error de lectura</h2>
+            <div class="acta">
+                <div class="linea linea-err" th:each="e : ${errores}"
+                     th:text="${e.archivo} + ': ' + ${e.error}">error</div>
+            </div>
+        </div>
+
+    </th:block>
+
+</div>
+</body>
+</html>

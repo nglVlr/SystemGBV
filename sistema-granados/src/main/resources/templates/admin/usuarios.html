@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Usuarios', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">Administracion</div>
+        <h1>Usuarios</h1>
+        <div class="detalle">Cuentas y roles de acceso.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="acciones-fila mb-16">
+        <a th:href="@{/admin/usuarios/nuevo}" class="btn-jade">
+            <i class="bi bi-person-plus"></i> Crear usuario
+        </a>
+    </div>
+
+    <div class="tabla-envoltura scroll-alto">
+        <table class="tabla-datos">
+            <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Nombre completo</th>
+                <th>Roles</th>
+                <th class="centrado">Estado</th>
+                <th>Ultimo acceso</th>
+                <th class="centrado">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${usuarios}">
+                <td>
+                    <strong th:text="${u.username}">usuario</strong>
+                    <span th:if="${u.id == idActual}"
+                          class="insignia insignia-pino">tú</span>
+                </td>
+                <td class="celda-proveedor" th:text="${u.nombreCompleto}" th:title="${u.nombreCompleto}">Nombre</td>
+                <td>
+                    <span th:each="r : ${u.roles}"
+                          class="insignia insignia-jade"
+                          th:text="${r.nombre}">ROL</span>
+                </td>
+                <td class="centrado">
+                    <span th:if="${u.activo}" class="insignia insignia-jade">Activo</span>
+                    <span th:unless="${u.activo}" class="insignia insignia-rojo">Inactivo</span>
+                </td>
+                <td class="texto-suave"
+                    th:text="${u.ultimoAcceso != null}
+                             ? ${#temporals.format(u.ultimoAcceso,'dd/MM/yyyy HH:mm')}
+                             : 'Nunca'">fecha</td>
+                <td class="centrado">
+                    <div class="acciones-fila acciones-centro">
+                        <a th:href="@{/admin/usuarios/{id}/editar(id=${u.id})}"
+                           class="btn-neutro btn-chico">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <form th:if="${u.id != idActual}"
+                              th:action="@{/admin/usuarios/{id}/toggle(id=${u.id})}"
+                              method="post" class="sin-margen">
+                            <button type="submit" class="btn-neutro btn-chico">
+                                <i class="bi bi-power"></i>
+                                <span th:text="${u.activo} ? 'Desactivar' : 'Activar'">Estado</span>
+                            </button>
+                        </form>
+                        <form th:if="${u.id != idActual}"
+                              th:action="@{/admin/usuarios/{id}/eliminar(id=${u.id})}"
+                              method="post" class="sin-margen"
+                              th:attr="data-confirmar='Eliminar al usuario ' + ${u.username} + '? Esta accion no se puede deshacer.'">
+                            <button type="submit" class="btn-peligro btn-chico">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(usuarios)}">
+                <td colspan="6" class="centrado texto-suave">No hay usuarios registrados.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

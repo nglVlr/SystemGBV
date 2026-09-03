@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Buscar en la BD', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Base de datos</div>
+        <h1>Buscar</h1>
+        <div class="detalle">NIT, nombre, NPG, contrato o cheque.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <form th:action="@{/dafim/compras/buscar}" method="get">
+            <div class="acciones-fila">
+                <input type="text" name="q" class="form-control"
+                       style="flex:1; min-width:200px; max-width:520px;"
+                       placeholder="NIT, nombre, NPG, contrato, cheque o descripción..."
+                       th:value="${q}" autofocus>
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+                <a th:href="@{/dafim/compras/buscar}" class="btn-neutro">Limpiar</a>
+            </div>
+            <div class="rejilla rejilla-4 mt-12">
+                <div class="campo">
+                    <label class="form-label" for="fTipo">Buscar en</label>
+                    <select class="form-select" id="fTipo" name="tipo">
+                        <option value="TODOS" th:selected="${tipo == 'TODOS'}">Todo</option>
+                        <option value="CONTRATOS" th:selected="${tipo == 'CONTRATOS'}">Contratos 029</option>
+                        <option value="PROVEEDORES" th:selected="${tipo == 'PROVEEDORES'}">Proveedores</option>
+                        <option value="PAGOS" th:selected="${tipo == 'PAGOS'}">Pagos (historial)</option>
+                        <option value="PUBLICACIONES" th:selected="${tipo == 'PUBLICACIONES'}">Publicaciones Guatecompras</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label class="form-label" for="fRenglon">Renglón</label>
+                    <input type="text" class="form-control numeros" id="fRenglon"
+                           name="renglon" th:value="${renglon}" placeholder="029, 142...">
+                </div>
+                <div class="campo">
+                    <label class="form-label" for="fAnio">Año</label>
+                    <input type="number" class="form-control numeros" id="fAnio"
+                           name="anio" th:value="${anio}" min="2020" max="2100" placeholder="2026">
+                </div>
+                <div class="campo">
+                    <label class="form-label" for="fMes">Mes</label>
+                    <select class="form-select" id="fMes" name="mes">
+                        <option value="">Todos</option>
+                        <option value="1" th:selected="${mes == 1}">Enero</option>
+                        <option value="2" th:selected="${mes == 2}">Febrero</option>
+                        <option value="3" th:selected="${mes == 3}">Marzo</option>
+                        <option value="4" th:selected="${mes == 4}">Abril</option>
+                        <option value="5" th:selected="${mes == 5}">Mayo</option>
+                        <option value="6" th:selected="${mes == 6}">Junio</option>
+                        <option value="7" th:selected="${mes == 7}">Julio</option>
+                        <option value="8" th:selected="${mes == 8}">Agosto</option>
+                        <option value="9" th:selected="${mes == 9}">Septiembre</option>
+                        <option value="10" th:selected="${mes == 10}">Octubre</option>
+                        <option value="11" th:selected="${mes == 11}">Noviembre</option>
+                        <option value="12" th:selected="${mes == 12}">Diciembre</option>
+                    </select>
+                </div>
+            </div>
+            <label class="mt-12" style="display:flex; gap:8px; align-items:center;">
+                <input type="checkbox" name="sinPago" value="true" th:checked="${sinPago}">
+                <span>Solo publicaciones cuyo NPG no esta en un cheque guardado</span>
+            </label>
+            <p class="mt-12">
+                <a th:href="@{/dafim/bitacora(tipo='PUBLICACIONES')}">Ver todas las publicaciones NPG</a>
+            </p>
+        </form>
+    </div>
+
+    <th:block th:if="${buscado}">
+
+        <div class="aviso aviso-ambar" role="status"
+             th:if="${#lists.isEmpty(contratos) and #lists.isEmpty(proveedores)
+                      and #lists.isEmpty(pagos) and #lists.isEmpty(publicaciones)}">
+            <i class="bi bi-search"></i>
+            <div>No hubo coincidencias para esa busqueda. Prueba con NIT, nombre o NPG.</div>
+        </div>
+
+        <div class="tarjeta">
+            <h2>Personal por contrato (029)
+                <span class="insignia insignia-pino"
+                      th:text="${#lists.size(contratos)}">0</span>
+            </h2>
+            <div class="tabla-envoltura" th:if="${!#lists.isEmpty(contratos)}">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th>NIT</th><th>Nombre</th><th>Contrato</th>
+                        <th>Cargo</th><th>NPG</th><th class="centrado">Anio</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="c : ${contratos}">
+                        <td class="numeros" th:text="${c.nit}">nit</td>
+                        <td class="celda-proveedor" th:text="${c.nombre}" th:title="${c.nombre}">nombre</td>
+                        <td class="numeros" th:text="${c.contrato}">contrato</td>
+                        <td th:text="${c.cargo}">cargo</td>
+                        <td class="numeros" th:text="${c.npg}">npg</td>
+                        <td class="centrado numeros" th:text="${c.anio}">2026</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="texto-suave sin-margen" th:if="${#lists.isEmpty(contratos)}">
+                Sin coincidencias en contratos 029.
+            </p>
+        </div>
+
+        <div class="tarjeta">
+            <h2>Proveedores
+                <span class="insignia insignia-pino"
+                      th:text="${#lists.size(proveedores)}">0</span>
+            </h2>
+            <div class="tabla-envoltura" th:if="${!#lists.isEmpty(proveedores)}">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th>NIT</th><th>Nombre</th>
+                        <th class="centrado">Renglon</th><th>Descripcion</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${proveedores}">
+                        <td class="numeros" th:text="${p.nit}">nit</td>
+                        <td class="celda-proveedor" th:text="${p.nombre}" th:title="${p.nombre}">nombre</td>
+                        <td class="centrado">
+                            <span class="insignia insignia-neutra" th:text="${p.renglon}">299</span>
+                        </td>
+                        <td class="celda-desc" th:text="${p.descripcion}">desc</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="texto-suave sin-margen" th:if="${#lists.isEmpty(proveedores)}">
+                Sin coincidencias en proveedores.
+            </p>
+        </div>
+
+        <div class="tarjeta">
+            <h2>Pagos en el historial
+                <span class="insignia insignia-pino" th:text="${#lists.size(pagos)}">0</span>
+            </h2>
+            <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(pagos)}">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th class="centrado">Mes</th><th>Cheque</th><th>NIT</th>
+                        <th>Nombre</th><th class="centrado">Reng.</th>
+                        <th class="monto">Monto Q</th><th>NPG</th><th>Contrato</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="h : ${pagos}">
+                        <td class="centrado numeros"
+                            th:text="${#numbers.formatInteger(h.mes,2)} + '/' + ${h.anio}">01/2026</td>
+                        <td class="numeros" th:text="${h.cheque}">cheque</td>
+                        <td class="numeros" th:text="${h.nit}">nit</td>
+                        <td class="celda-proveedor" th:text="${h.nombre}" th:title="${h.nombre}">nombre</td>
+                        <td class="centrado">
+                            <span class="insignia"
+                                  th:classappend="${h.renglon == '029'} ? 'insignia-pino' : 'insignia-neutra'"
+                                  th:text="${h.renglon}">reng</span>
+                        </td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(h.monto, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                        <td class="numeros" th:text="${h.npg}">npg</td>
+                        <td class="numeros" th:text="${h.contrato}">contrato</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="texto-suave sin-margen" th:if="${#lists.isEmpty(pagos)}">
+                Sin pagos registrados para esa busqueda.
+            </p>
+        </div>
+
+        <div class="tarjeta">
+            <h2>Publicaciones Guatecompras
+                <span class="insignia insignia-pino"
+                      th:text="${#lists.size(publicaciones)}">0</span>
+            </h2>
+            <p class="subtitulo">Catalogo de NPG. Incluye las que no salieron en el informe de cheques.</p>
+            <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(publicaciones)}">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th>NPG</th><th>Persona</th><th>NIT</th>
+                        <th>Descripcion</th><th class="monto">Monto Q</th>
+                        <th class="centrado">Mes</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${publicaciones}">
+                        <td class="numeros" th:text="${p.npg}">E00</td>
+                        <td class="celda-proveedor" th:text="${p.nombre}" th:title="${p.nombre}">nombre</td>
+                        <td class="numeros" th:text="${p.nit}">nit</td>
+                        <td class="celda-desc" th:text="${p.descripcion}">desc</td>
+                        <td class="monto numeros"
+                            th:text="${p.monto != null} ? ${#numbers.formatDecimal(p.monto, 1, 'COMMA', 2, 'POINT')} : '0.00'">0.00</td>
+                        <td class="centrado numeros"
+                            th:text="${p.mes != null} ? ${#numbers.formatInteger(p.mes,2)} + '/' + ${p.anio} : '—'">08/2026</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="texto-suave sin-margen" th:if="${#lists.isEmpty(publicaciones)}">
+                Sin coincidencias en publicaciones Guatecompras.
+            </p>
+        </div>
+
+    </th:block>
+
+</div>
+</body>
+</html>

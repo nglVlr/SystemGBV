@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Procesar paquetes', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Paquetes de facturas</div>
+        <h1>Procesar un mes</h1>
+        <div class="detalle">Excel de paquetes + PDFs FEL (sueltos o en un ZIP).</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <form th:action="@{/dafim/paquetes/procesar}" method="post"
+              enctype="multipart/form-data"
+              data-procesando="Leyendo facturas y armando paquetes... esto puede tardar un poco con cientos de PDFs.">
+            <div class="rejilla rejilla-2">
+                <div class="campo">
+                    <label for="mes" class="form-label">Mes *</label>
+                    <select class="form-control" id="mes" name="mes" required>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="anio" class="form-label">Año *</label>
+                    <input type="number" class="form-control numeros" id="anio"
+                           name="anio" required min="2020" max="2100"
+                           th:value="${anioActual}">
+                </div>
+            </div>
+            <div class="campo mt-12">
+                <label for="excel" class="form-label">Excel de paquetes *</label>
+                <input type="file" class="form-control" id="excel" name="excel"
+                       accept=".xlsx,.xls" required>
+                <div class="ayuda">Cada hoja del Excel es un paquete, con sus
+                    columnas de concepto y monto.</div>
+            </div>
+            <div class="campo mt-12">
+                <label for="pdfs" class="form-label">Facturas PDF *</label>
+                <input type="file" class="form-control" id="pdfs" name="pdfs"
+                       accept=".pdf,.zip" multiple required>
+                <div class="ayuda">Selecciona todos los PDFs de una vez (Ctrl+A
+                    en la carpeta) o un unico ZIP con todos adentro. No importa
+                    el orden: el sistema los acomoda.</div>
+            </div>
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-magic"></i> Procesar y guardar
+                </button>
+                <a th:href="@{/dafim/paquetes}" class="btn-neutro">Volver</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="tarjeta">
+        <h2>Como funciona</h2>
+        <p class="subtitulo">
+            1. Se lee cada factura: numero de autorizacion, DTE, monto y
+            descripcion. 2. Cada linea de cada paquete busca su factura por
+            monto exacto y descripcion mas parecida. 3. Si dos facturas tienen
+            la misma descripcion y monto, se usan una sola vez cada una: el
+            numero de autorizacion nunca se repite, ni contra meses anteriores
+            ya guardados. 4. Todo queda en la base de datos y puedes imprimir
+            cada paquete como un solo PDF con las facturas en orden.
+        </p>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Transferencias', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>Transferencias</h1>
+        <div class="detalle">Simula el movimiento. No se guarda: la modificacion real se tramita en SICOIN.</div>
+        <div class="filete"></div>
+    </div>
+
+    <!-- ===================== ESTADO VACIO (sin carga) ===================== -->
+    <div class="tarjeta vacio-modulo" th:if="${!hayCarga}">
+        <i class="bi bi-bank" aria-hidden="true"></i>
+        <h2>Aun no hay presupuesto cargado</h2>
+        <p class="subtitulo">
+            Primero sube el PDF de ejecucion de egresos en Cargas.
+        </p>
+        <a th:href="@{/dafim/presupuesto/cargar}" class="btn-jade">
+            <i class="bi bi-file-earmark-pdf"></i> Ir a Cargas
+        </a>
+    </div>
+
+    <th:block th:if="${hayCarga}">
+
+        <div class="aviso aviso-ambar" role="alert">
+            <i class="bi bi-info-circle"></i>
+            <div>Solo simulacion: aqui no se guarda nada.</div>
+        </div>
+
+        <!-- =========================== SIMULADOR ========================== -->
+        <div class="tarjeta mb-22">
+            <form th:action="@{/dafim/presupuesto/transferencias}" method="get" data-filtro>
+                <div class="rejilla rejilla-2 mb-14">
+                    <div class="campo">
+                        <label class="form-label" for="fOrigen">Origen (de donde sale)</label>
+                        <select class="form-select" id="fOrigen" name="origen">
+                            <option value="">— Elige la linea donante —</option>
+                            <option th:each="l : ${lineas}" th:value="${l.id}"
+                                    th:selected="${origen != null && origen == l.id}"
+                                    th:text="(${l.fuente} ?: '') + ' · ' + (${l.renglon} ?: '') + ' · ' + (${l.descripcion} ?: '') + ' — saldo Q ' + ${#numbers.formatDecimal(l.saldoDisponible ?: 0, 1, 'COMMA', 2, 'POINT')}"></option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label class="form-label" for="fDestino">Destino (a donde entra)</label>
+                        <select class="form-select" id="fDestino" name="destino">
+                            <option value="">— Elige la linea que recibe —</option>
+                            <option th:each="l : ${lineas}" th:value="${l.id}"
+                                    th:selected="${destino != null && destino == l.id}"
+                                    th:text="(${l.fuente} ?: '') + ' · ' + (${l.renglon} ?: '') + ' · ' + (${l.descripcion} ?: '') + ' — saldo Q ' + ${#numbers.formatDecimal(l.saldoDisponible ?: 0, 1, 'COMMA', 2, 'POINT')}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="acciones-fila sin-margen flex-wrap-gap">
+                    <label class="solo-lector" for="fMontoMover">Monto a mover</label>
+                    <input type="text" id="fMontoMover" name="monto" class="form-control flex-monto-lg" th:value="${monto}"
+                           placeholder="Monto a mover Q" inputmode="decimal"
+                           aria-label="Monto a mover en quetzales">
+                    <button type="submit" class="btn-jade">
+                        <i class="bi bi-arrow-left-right"></i> Simular
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ======================== ERROR DE MONTO ======================== -->
+        <div class="aviso aviso-error" role="alert" th:if="${errorMonto != null}">
+            <i class="bi bi-exclamation-triangle"></i>
+            <div th:text="${errorMonto}">monto invalido</div>
+        </div>
+
+        <!-- ======================== RESULTADO ============================= -->
+        <div class="tarjeta" th:if="${simulacion != null}">
+            <h2><i class="bi bi-arrow-left-right"></i> Resultado</h2>
+
+            <div class="aviso" role="alert"
+                 th:classappend="${simulacion.valida} ? 'aviso-exito' : 'aviso-error'">
+                <i class="bi"
+                   th:classappend="${simulacion.valida} ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
+                <div th:text="${simulacion.mensaje}">mensaje</div>
+            </div>
+
+            <th:block th:if="${simulacion.valida}">
+                <div class="rejilla rejilla-2 mt-16">
+                    <div class="tarjeta-stat">
+                        <div class="etiqueta"
+                             th:text="'ORIGEN · ' + (${simulacion.origen.fuente} ?: '') + ' · ' + (${simulacion.origen.renglon} ?: '')">ORIGEN</div>
+                        <div class="valor numeros"
+                             th:text="'Q ' + ${#numbers.formatDecimal(simulacion.saldoOrigenDespues ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                        <div class="nota">
+                            <i class="bi bi-arrow-down"></i>
+                            antes: Q <span class="numeros"
+                                 th:text="${#numbers.formatDecimal(simulacion.saldoOrigenAntes ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                        </div>
+                    </div>
+                    <div class="tarjeta-stat">
+                        <div class="etiqueta"
+                             th:text="'DESTINO · ' + (${simulacion.destino.fuente} ?: '') + ' · ' + (${simulacion.destino.renglon} ?: '')">DESTINO</div>
+                        <div class="valor numeros"
+                             th:text="'Q ' + ${#numbers.formatDecimal(simulacion.saldoDestinoDespues ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                        <div class="nota">
+                            <i class="bi bi-arrow-up"></i>
+                            antes: Q <span class="numeros"
+                                 th:text="${#numbers.formatDecimal(simulacion.saldoDestinoAntes ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="acciones-fila acciones-centro mt-16">
+                    <span class="insignia insignia-pino"
+                          th:text="(${simulacion.origen.fuente} ?: '') + ' · ' + (${simulacion.origen.renglon} ?: '')">origen</span>
+                    <strong class="texto-dorado numeros stat-17">
+                        <span th:text="'Q ' + ${#numbers.formatDecimal(simulacion.monto ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0.00</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </strong>
+                    <span class="insignia insignia-jade"
+                          th:text="(${simulacion.destino.fuente} ?: '') + ' · ' + (${simulacion.destino.renglon} ?: '')">destino</span>
+                </div>
+            </th:block>
+        </div>
+
+    </th:block>
+
+</div>
+</body>
+</html>

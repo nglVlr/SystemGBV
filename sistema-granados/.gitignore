@@ -1,0 +1,19 @@
+# compilados
+target/
+out/
+*.class
+
+# archivos de trabajo del sistema
+storage/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# sistema operativo
+Thumbs.db
+.DS_Store

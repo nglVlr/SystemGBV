@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Buscar factura', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Paquetes de facturas</div>
+        <h1>Buscar factura por DTE</h1>
+        <div class="detalle">
+            Busca en todos los meses guardados, para revisar rapido si una
+            factura fisica ya esta en el sistema y en que paquete quedo.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="buscador-caja">
+        <i class="bi bi-search"></i>
+        <form th:action="@{/dafim/paquetes/buscar}" method="get" style="flex:1; display:flex; gap:10px;">
+            <input type="search" name="dte" class="form-control" th:value="${dte}"
+                   placeholder="Numero de DTE (o parte de el)..." autofocus>
+            <button type="submit" class="btn-jade">Buscar</button>
+            <a th:href="@{/dafim/paquetes}" class="btn-neutro">Volver a meses</a>
+        </form>
+    </div>
+
+    <div class="tarjeta" th:if="${dte != null and #strings.isEmpty(dte) == false and resultados == null}">
+        <p class="subtitulo sin-margen">Escribe un DTE y dale a Buscar.</p>
+    </div>
+
+    <div class="tarjeta" th:if="${resultados != null and #lists.isEmpty(resultados)}">
+        <p class="subtitulo sin-margen">
+            No se encontro ninguna factura con DTE que contenga
+            "<span th:text="${dte}">dte</span>".
+        </p>
+    </div>
+
+    <div th:if="${resultados != null and !#lists.isEmpty(resultados)}">
+        <p class="texto-suave texto-chico" style="margin-bottom:10px;"
+           th:text="${#lists.size(resultados)} + ' resultado(s) para \"' + ${dte} + '\"'">0 resultados</p>
+
+        <div class="resultado-dte" th:each="r : ${resultados}">
+            <div>
+                <div class="dte-titulo">
+                    DTE <span th:text="${r.factura.numeroDte}">dte</span>
+                    · Q <span th:text="${#numbers.formatDecimal(r.factura.monto, 1, 'COMMA', 2, 'POINT')}">0</span>
+                </div>
+                <div class="dte-detalle">
+                    <span th:text="${r.factura.nombreEmisor}">emisor</span>
+                    ·
+                    <span th:text="${r.factura.fechaEmision != null} ? ${#temporals.format(r.factura.fechaEmision,'dd/MM/yyyy')} : 'sin fecha'">fecha</span>
+                    ·
+                    <span th:text="${r.factura.mes} + '/' + ${r.factura.anio}">mes/anio</span>
+                    ·
+                    <span th:if="${r.linea != null}">
+                        paquete <strong th:text="${r.linea.paquete.numero} + ' · ' + ${r.linea.paquete.nombre}">paquete</strong>
+                    </span>
+                    <span class="insignia insignia-ambar" th:if="${r.linea == null}">SIN PAQUETE</span>
+                </div>
+            </div>
+            <div class="acciones-fila">
+                <button type="button" class="btn-neutro ver-factura-directa"
+                        th:attr="data-pdf=@{/dafim/paquetes/factura/{id}/pdf(id=${r.factura.id})},
+                                 data-dte=${r.factura.numeroDte},
+                                 data-emisor=${r.factura.nombreEmisor}">
+                    <i class="bi bi-eye"></i> Vista previa
+                </button>
+                <a th:if="${r.linea != null}" class="btn-jade"
+                   th:href="@{/dafim/paquetes/{a}/{m}(a=${r.factura.anio},m=${r.factura.mes})} + '#paquete-' + ${r.linea.paquete.id}">
+                    Ir al paquete
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================== VISTA PREVIA DE FACTURA ================== -->
+    <div id="modal-factura" class="no-imprimir">
+        <div class="previa-caja">
+            <div class="previa-cabecera">
+                <div class="previa-titulos">
+                    <strong id="previa-dte">Vista previa de la factura</strong>
+                    <span class="texto-suave texto-chico" id="previa-emisor"></span>
+                </div>
+                <button type="button" class="btn-neutro" onclick="cerrarPrevia()">
+                    <i class="bi bi-x-lg"></i> Cerrar
+                </button>
+            </div>
+            <iframe id="marco-factura" src="about:blank"
+                    style="border:0; width:100%; flex:1;"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function abrirPrevia(url, dte, emisor) {
+            document.getElementById('marco-factura').src = url;
+            document.getElementById('previa-dte').textContent = dte ? ('DTE ' + dte) : 'Vista previa de la factura';
+            document.getElementById('previa-emisor').textContent = emisor || '';
+            document.getElementById('modal-factura').style.display = 'block';
+        }
+        function cerrarPrevia() {
+            document.getElementById('modal-factura').style.display = 'none';
+            document.getElementById('marco-factura').src = 'about:blank';
+        }
+        document.getElementById('modal-factura').addEventListener('click', function (e) {
+            if (e.target === this) cerrarPrevia();
+        });
+        document.querySelectorAll('.ver-factura-directa').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                abrirPrevia(btn.getAttribute('data-pdf'), btn.getAttribute('data-dte'), btn.getAttribute('data-emisor'));
+            });
+        });
+    </script>
+
+</div>
+</body>
+</html>

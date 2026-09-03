@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Apartar pago', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>Apartar para un pago</h1>
+        <div class="detalle">
+            Reserva presupuesto de esta linea. El dinero de banco es independiente:
+            puedes apartar aunque el boletin no alcance.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta mb-18">
+        <h2>
+            <span class="insignia insignia-pino"
+                  th:text="${vista.linea.renglon}">000</span>
+            <strong th:text="${vista.linea.descripcion}">descripcion</strong>
+        </h2>
+        <p class="subtitulo sin-margen">
+            Fuente
+            <span class="codigo-con-copia">
+                <strong th:text="${vista.linea.fuente}">00-0000-0000</strong>
+                <button type="button" class="btn-copiar"
+                        th:attr="data-copiar=${vista.linea.fuente}"
+                        aria-label="Copiar codigo de fuente" title="Copiar">
+                    <i class="bi bi-clipboard" aria-hidden="true"></i>
+                </button>
+            </span>
+            <span class="texto-suave" th:if="${!#strings.isEmpty(vista.nombreFuente)}"
+                  th:text="' · ' + ${vista.nombreFuente}">nombre</span>
+            <span th:if="${!#strings.isEmpty(vista.linea.programa)}"
+                  th:text="' · ' + ${vista.linea.programa}">programa</span>
+            <span th:if="${!#strings.isEmpty(vista.linea.proyecto)
+                          and vista.linea.proyecto != '000 SIN PROYECTO'}"
+                  th:text="' · ' + ${vista.linea.proyecto}">proyecto</span>
+            <span th:if="${!#strings.isEmpty(vista.linea.actividad)}"
+                  th:text="' · ' + ${vista.linea.actividad}">actividad</span>
+            <span th:if="${#strings.isEmpty(vista.linea.actividad)
+                          and !#strings.isEmpty(vista.linea.actividadObra)}"
+                  th:text="' · act. ' + ${vista.linea.actividadObra}">obra</span>
+        </p>
+    </div>
+
+    <div class="rejilla rejilla-2 mb-22">
+        <div class="tarjeta">
+            <h2 class="h2-compacto"><i class="bi bi-bank"></i> Presupuesto</h2>
+            <p class="subtitulo">SICOIN de esta linea, menos lo ya apartado.</p>
+            <div class="rejilla rejilla-3">
+                <div class="tarjeta-stat">
+                    <div class="etiqueta">SICOIN</div>
+                    <div class="valor numeros stat-valor-18"
+                         th:text="'Q ' + ${#numbers.formatDecimal(vista.presupuestoSicoin, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                </div>
+                <div class="tarjeta-stat">
+                    <div class="etiqueta">Ya apartado</div>
+                    <div class="valor numeros stat-valor-18"
+                         th:text="'Q ' + ${#numbers.formatDecimal(vista.presupuestoApartado, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                </div>
+                <div class="tarjeta-stat">
+                    <div class="etiqueta">Libre</div>
+                    <div class="valor numeros texto-dorado stat-valor-18"
+                         th:text="'Q ' + ${#numbers.formatDecimal(vista.presupuestoLibre, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                </div>
+            </div>
+        </div>
+        <div class="tarjeta">
+            <h2 class="h2-compacto"><i class="bi bi-cash-coin"></i> Dinero real</h2>
+            <p class="subtitulo">Boletin de caja
+                <span th:if="${!#strings.isEmpty(vista.etiquetaTipoDinero)}"
+                      th:text="'de ' + ${vista.etiquetaTipoDinero}">de funcionamiento</span>
+                de la fuente, menos lo ya apartado. Puede ir en 0.</p>
+            <div class="rejilla rejilla-3">
+                <div class="tarjeta-stat">
+                    <div class="etiqueta">Boletin</div>
+                    <div class="valor numeros stat-valor-18"
+                         th:text="'Q ' + ${#numbers.formatDecimal(vista.bancoSicoin, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                </div>
+                <div class="tarjeta-stat">
+                    <div class="etiqueta">Ya apartado</div>
+                    <div class="valor numeros stat-valor-18"
+                         th:text="'Q ' + ${#numbers.formatDecimal(vista.bancoApartado, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                </div>
+                <div class="tarjeta-stat">
+                    <div class="etiqueta">Libre</div>
+                    <div class="valor numeros stat-valor-18"
+                         th:text="'Q ' + ${#numbers.formatDecimal(vista.bancoLibre, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tarjeta" th:with="bancoAbierto=${montoBanco != null and montoBanco != '0' and montoBanco != '0.00' and !#strings.isEmpty(montoBanco)}">
+        <form th:action="@{/dafim/presupuesto/apartar}" method="post"
+              th:attr="data-confirmar=|Apartar «${#strings.isEmpty(concepto) ? 'este pago' : concepto}» de renglon ${vista.linea.renglon} / fuente ${vista.linea.fuente}? El presupuesto (y el banco, si pusiste monto) dejaran de estar libres hasta que lo pagues o lo liberes.|">
+            <input type="hidden" name="lineaId" th:value="${vista.linea.id}">
+            <input type="hidden" name="renglon" th:value="${vista.linea.renglon}">
+            <input type="hidden" name="fuente" th:value="${vista.linea.fuente}">
+            <input type="hidden" name="actividadObra"
+                   th:value="${vista.linea.actividadObra}">
+            <input type="hidden" name="programa" th:value="${vista.linea.programa}">
+            <input type="hidden" name="proyecto" th:value="${vista.linea.proyecto}">
+            <input type="hidden" name="q" th:value="${q}">
+
+            <div class="campo mb-16">
+                <label class="form-label" for="fConcepto">Concepto del pago</label>
+                <input type="text" id="fConcepto" name="concepto" class="form-control"
+                       required maxlength="200" th:value="${concepto}"
+                       placeholder="Ej.: fletes de material, cheque a transportista..."
+                       autocomplete="off">
+            </div>
+
+            <div class="campo mb-16">
+                <label class="form-label" for="fPres">Apartar de presupuesto Q</label>
+                <input type="text" id="fPres" name="montoPresupuesto" class="form-control"
+                       required th:value="${montoPresupuesto}"
+                       placeholder="20000" inputmode="decimal"
+                       aria-describedby="ayudaPres">
+                <div class="atajos-monto" role="group" aria-label="Atajos de presupuesto libre">
+                    <button type="button" class="chip-filtro" data-porcentaje="25" data-destino="fPres"
+                            th:attr="data-max=${vista.presupuestoLibre}"
+                            aria-label="Usar 25 por ciento del presupuesto libre">25%</button>
+                    <button type="button" class="chip-filtro" data-porcentaje="50" data-destino="fPres"
+                            th:attr="data-max=${vista.presupuestoLibre}"
+                            aria-label="Usar 50 por ciento del presupuesto libre">50%</button>
+                    <button type="button" class="chip-filtro" data-porcentaje="100" data-destino="fPres"
+                            th:attr="data-max=${vista.presupuestoLibre}"
+                            aria-label="Usar 100 por ciento del presupuesto libre">100%</button>
+                </div>
+                <div class="ayuda" id="ayudaPres">
+                    Maximo libre:
+                    <span class="numeros"
+                          th:text="'Q ' + ${#numbers.formatDecimal(vista.presupuestoLibre, 1, 'COMMA', 2, 'POINT')}">Q 0</span>
+                </div>
+            </div>
+
+            <p class="ayuda ayuda-apartar" th:unless="${bancoAbierto}">
+                Solo presupuesto. Podras agregar banco despues desde Apartados.
+            </p>
+
+            <details class="panel-desplegable" th:open="${bancoAbierto}">
+                <summary>
+                    Añadir banco ahora
+                    <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+                </summary>
+                <div class="panel-cuerpo">
+                    <div class="campo">
+                        <label class="form-label" for="fBanco">Apartar de banco Q</label>
+                        <input type="text" id="fBanco" name="montoBanco" class="form-control"
+                               th:value="${montoBanco}" placeholder="0" inputmode="decimal"
+                               aria-describedby="ayudaBanco">
+                        <div class="atajos-monto" role="group" aria-label="Atajos de banco libre">
+                            <button type="button" class="chip-filtro" data-porcentaje="25" data-destino="fBanco"
+                                    th:attr="data-max=${vista.bancoLibre}"
+                                    aria-label="Usar 25 por ciento del banco libre">25%</button>
+                            <button type="button" class="chip-filtro" data-porcentaje="50" data-destino="fBanco"
+                                    th:attr="data-max=${vista.bancoLibre}"
+                                    aria-label="Usar 50 por ciento del banco libre">50%</button>
+                            <button type="button" class="chip-filtro" data-porcentaje="100" data-destino="fBanco"
+                                    th:attr="data-max=${vista.bancoLibre}"
+                                    aria-label="Usar 100 por ciento del banco libre">100%</button>
+                        </div>
+                        <div class="ayuda" id="ayudaBanco">
+                            Independiente. 0 si aun no hay efectivo. Maximo:
+                            <span class="numeros"
+                                  th:text="'Q ' + ${#numbers.formatDecimal(vista.bancoLibre, 1, 'COMMA', 2, 'POINT')}">Q 0</span>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-bookmark-check"></i> Apartar
+                </button>
+                <a th:href="@{/dafim/presupuesto/donde-pagar(q=${q}, monto=${monto})}" class="btn-neutro">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+
+</div>
+</body>
+</html>

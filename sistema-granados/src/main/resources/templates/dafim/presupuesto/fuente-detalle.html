@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Detalle de fuente', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>
+            Fuente
+            <span class="codigo-con-copia">
+                <span th:text="${desglose.codigo}">00-0000-0000</span>
+                <button type="button" class="btn-copiar"
+                        th:attr="data-copiar=${desglose.codigo}"
+                        aria-label="Copiar codigo de fuente" title="Copiar">
+                    <i class="bi bi-clipboard" aria-hidden="true"></i>
+                </button>
+            </span>
+            <span class="texto-suave folio-nombre"
+                  th:text="${#strings.isEmpty(desglose.nombre)} ? '(sin nombre)' : '· ' + ${desglose.nombre}">nombre</span>
+        </h1>
+        <div class="detalle">Lineas agrupadas por programa: de aqui se elige el origen de una transferencia.</div>
+        <div class="filete"></div>
+    </div>
+
+    <!-- ====================== TOTALES DE LA FUENTE ====================== -->
+    <div class="rejilla rejilla-4 mb-22">
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Vigente</div>
+            <div class="valor numeros"
+                 th:text="'Q ' + ${#numbers.formatDecimal(desglose.totalVigente ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Devengado</div>
+            <div class="valor numeros"
+                 th:text="'Q ' + ${#numbers.formatDecimal(desglose.totalDevengado ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Saldo</div>
+            <div class="valor numeros"
+                 th:text="'Q ' + ${#numbers.formatDecimal(desglose.totalSaldo ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Dinero en banco</div>
+            <div class="valor numeros"
+                 th:text="${cargaCaja == null} ? '—' : ('Q ' + ${#numbers.formatDecimal(desglose.dineroReal ?: 0, 1, 'COMMA', 2, 'POINT')})">Q 0</div>
+            <div class="nota"
+                 th:if="${cargaCaja != null}"
+                 th:text="'funcionamiento Q ' + ${#numbers.formatDecimal(desglose.dineroRealFuncionamiento ?: 0, 1, 'COMMA', 2, 'POINT')} + ' · inversión Q ' + ${#numbers.formatDecimal(desglose.dineroRealInversion ?: 0, 1, 'COMMA', 2, 'POINT')}">func / inv</div>
+            <div class="nota"
+                 th:if="${cargaCaja == null}">sin boletin de caja</div>
+            <div class="nota" th:if="${cargaCaja != null and cargaCaja.fechaCorte != null}">
+                al
+                <time th:attr="data-fecha=${#temporals.formatISO(cargaCaja.fechaCorte)}"
+                      th:text="${#temporals.format(cargaCaja.fechaCorte,'dd/MM/yyyy')}">fecha</time>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============== ALCANZA PRESUPUESTO / BANCO ====================== -->
+    <div class="tarjeta mb-22" th:if="${montoPago != null}">
+        <h2 class="h2-compacto">¿Alcanza para pagar
+            <span class="numeros"
+                  th:text="'Q ' + ${#numbers.formatDecimal(montoPago, 1, 'COMMA', 2, 'POINT')}">Q 0</span>?
+        </h2>
+        <div class="acciones-fila flex-wrap-gap">
+            <span class="insignia"
+                  th:classappend="${desglose.totalSaldo >= montoPago} ? 'insignia-jade' : 'insignia-rojo'"
+                  th:text="${desglose.totalSaldo >= montoPago} ? 'presupuesto alcanza' : 'presupuesto no alcanza'">presupuesto</span>
+            <span class="insignia"
+                  th:if="${cargaCaja != null}"
+                  th:classappend="${desglose.alcanzaBanco} ? 'insignia-jade' : 'insignia-ambar'"
+                  th:text="${desglose.alcanzaBanco} ? 'banco alcanza' : 'banco no alcanza'">banco</span>
+            <span class="insignia insignia-neutra" th:if="${cargaCaja == null}">sin boletin de caja</span>
+        </div>
+    </div>
+
+    <!-- ================== EJECUCION DE LA FUENTE ======================= -->
+    <div class="tarjeta mb-22"
+         th:with="vig=${desglose.totalVigente ?: 0}, dev=${desglose.totalDevengado ?: 0}">
+        <div th:if="${vig > 0}" th:with="pct=${dev * 100.0 / vig}">
+            <div class="barra-progreso grande">
+                <div class="relleno"
+                     th:classappend="${pct > 90} ? 'nivel-agotado' : (${pct >= 70} ? 'nivel-alerta' : 'nivel-ok')"
+                     th:style="'width:' + (${pct > 100} ? 100 : ${pct}) + '%'"></div>
+            </div>
+            <div class="progreso-pie progreso-pie-13"
+                 th:text="${#numbers.formatDecimal(pct, 1, 1)} + '% ejecutado'">0% ejecutado</div>
+        </div>
+        <div class="progreso-pie" th:if="${vig <= 0}">
+            Sin presupuesto vigente en esta fuente.
+        </div>
+    </div>
+
+    <!-- ====================== CUENTAS DEL BANCO ======================== -->
+    <div class="tarjeta mb-22"
+         th:if="${cargaCaja != null && !#lists.isEmpty(desglose.cuentasBanco)}">
+        <h2><i class="bi bi-cash-coin"></i> Cuentas monetarias</h2>
+        <p class="subtitulo">
+            Nuevo saldo
+            <strong class="numeros"
+                    th:text="'Q ' + ${#numbers.formatDecimal(desglose.dineroReal ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</strong>
+            · funcionamiento
+            <strong class="numeros"
+                    th:text="'Q ' + ${#numbers.formatDecimal(desglose.dineroRealFuncionamiento ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</strong>
+            · inversión
+            <strong class="numeros"
+                    th:text="'Q ' + ${#numbers.formatDecimal(desglose.dineroRealInversion ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</strong>
+        </p>
+        <div class="tabla-envoltura">
+            <table class="tabla-datos tabla-zebra tabla-hover">
+                <thead>
+                <tr>
+                    <th>Cuenta monetaria</th>
+                    <th>Descripcion</th>
+                    <th>Tipo</th>
+                    <th class="monto">Nuevo saldo Q</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${desglose.cuentasBanco}">
+                    <td class="numeros" th:text="${c.codigo}">codigo</td>
+                    <td class="celda-desc" th:text="${c.descripcion}">desc</td>
+                    <td th:text="${c.etiquetaTipoDinero}">funcionamiento</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(c.nuevoSaldo ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="aviso aviso-ambar mb-22" role="alert"
+         th:if="${cargaCaja != null && #lists.isEmpty(desglose.cuentasBanco)}">
+        <i class="bi bi-info-circle"></i>
+        <div>El boletin activo no trae cuentas para esta fuente.</div>
+    </div>
+
+    <!-- ======================== BUSCAR DONANTES ========================= -->
+    <div class="tarjeta mb-22">
+        <form th:action="@{/dafim/presupuesto/fuentes/{c}(c=${codigo})}" method="get"
+              class="acciones-fila sin-margen flex-wrap-gap" data-filtro>
+            <input type="hidden" name="q" th:value="${q}">
+            <label class="solo-lector" for="fMontoDonante">Monto del pago a cubrir</label>
+            <input type="text" id="fMontoDonante" name="monto" class="form-control flex-monto-lg" th:value="${monto}"
+                   placeholder="Monto del pago a cubrir Q (opcional)" inputmode="decimal"
+                   aria-label="Monto del pago a cubrir">
+            <button type="submit" class="btn-jade">
+                <i class="bi bi-search"></i> Ver donantes
+            </button>
+        </form>
+        <p class="subtitulo mt-10">
+            Con un monto se marcan las lineas cuyo saldo alcanza.
+        </p>
+    </div>
+
+    <!-- ======================== ERROR DE MONTO ========================== -->
+    <div class="aviso aviso-error" role="alert" th:if="${errorMonto != null}">
+        <i class="bi bi-exclamation-triangle"></i>
+        <div th:text="${errorMonto}">monto invalido</div>
+    </div>
+
+    <!-- ==================== GRUPOS POR PROGRAMA ========================= -->
+    <div data-filtro-ambito>
+    <div th:replace="~{dafim/presupuesto/_filtros :: local}"></div>
+    <p class="subtitulo" data-filtro-vacio-local hidden>0 resultados en estas lineas.</p>
+    <div class="apilado-grupos">
+    <div class="tarjeta" th:each="g : ${desglose.grupos}" data-filtro-grupo>
+        <h2 th:text="${g.titulo}">programa</h2>
+        <p class="subtitulo">
+            Vigente
+            <strong class="numeros"
+                    th:text="'Q ' + ${#numbers.formatDecimal(g.subtotalVigente ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</strong>
+            · Devengado
+            <strong class="numeros"
+                    th:text="'Q ' + ${#numbers.formatDecimal(g.subtotalDevengado ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</strong>
+            · Saldo
+            <strong class="numeros"
+                    th:text="'Q ' + ${#numbers.formatDecimal(g.subtotalSaldo ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</strong>
+        </p>
+
+        <div class="tabla-envoltura scroll-alto">
+            <table class="tabla-datos tabla-zebra tabla-hover">
+                <thead>
+                <tr>
+                    <th class="centrado">Renglon</th>
+                    <th>Objeto de gasto</th>
+                    <th class="centrado">Act/Obra</th>
+                    <th class="monto">Saldo libre Q</th>
+                    <th class="monto">Dinero real Q</th>
+                    <th class="col-ejecucion">Ejecucion</th>
+                    <th class="centrado">Accion</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="ld : ${g.lineas}" data-filtro-fila
+                    th:attr="data-filtro-texto=|${ld.linea.renglon} ${ld.linea.descripcion} ${ld.linea.actividadObra}|,
+                             data-saldo=${ld.saldoLibre > 0 ? '1' : '0'}">
+                    <td class="centrado">
+                        <div class="codigo-con-copia">
+                            <a class="enlace-codigo" th:href="@{/dafim/presupuesto/renglones/{c}(c=${ld.linea.renglon})}">
+                                <span class="insignia insignia-pino" th:text="${ld.linea.renglon}">000</span>
+                            </a>
+                            <button type="button" class="btn-copiar"
+                                    th:attr="data-copiar=${ld.linea.renglon}"
+                                    aria-label="Copiar codigo de renglon" title="Copiar">
+                                <i class="bi bi-clipboard" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="celda-desc" th:text="${ld.linea.descripcion}">descripcion</td>
+                    <td class="centrado numeros"
+                        th:text="${#strings.isEmpty(ld.linea.actividadObra)} ? '—' : ${ld.linea.actividadObra}">0</td>
+                    <td class="monto numeros">
+                        <span th:text="${#numbers.formatDecimal(ld.saldoLibre ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                        <div class="texto-suave texto-pie-11"
+                             th:if="${ld.apartadoPresupuesto > 0}"
+                             th:text="'apartado Q ' + ${#numbers.formatDecimal(ld.apartadoPresupuesto, 1, 'COMMA', 2, 'POINT')}">apartado</div>
+                    </td>
+                    <td class="monto numeros"
+                        th:text="${cargaCaja == null} ? '—' : ${#numbers.formatDecimal(ld.dineroReal ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td th:with="vig=${ld.linea.vigente ?: 0}, dev=${ld.linea.devengado ?: 0}">
+                        <div th:if="${vig > 0}" th:with="pct=${dev * 100.0 / vig}">
+                            <div class="barra-progreso slim">
+                                <div class="relleno"
+                                     th:classappend="${pct > 90} ? 'nivel-agotado' : (${pct >= 70} ? 'nivel-alerta' : 'nivel-ok')"
+                                     th:style="'width:' + (${pct > 100} ? 100 : ${pct}) + '%'"></div>
+                            </div>
+                            <div class="progreso-pie"
+                                 th:text="${#numbers.formatDecimal(pct, 1, 1)} + '%'">0%</div>
+                        </div>
+                        <span class="texto-suave" th:if="${vig <= 0}">—</span>
+                    </td>
+                    <td class="centrado">
+                        <span class="insignia insignia-rojo"
+                              th:if="${ld.saldoLibre <= 0}">agotada</span>
+                        <div class="acciones-fila sin-margen acciones-centro"
+                             th:if="${ld.saldoLibre > 0}">
+                            <span class="insignia insignia-jade"
+                                  th:if="${montoPago != null && ld.alcanza}">donante posible</span>
+                            <span class="insignia insignia-ambar"
+                                  th:if="${montoPago != null && !ld.alcanza}">no alcanza</span>
+                            <a class="btn-jade btn-chico"
+                               th:href="@{/dafim/presupuesto/apartar(lineaId=${ld.linea.id}, renglon=${ld.linea.renglon}, fuente=${codigo}, actividadObra=${ld.linea.actividadObra}, programa=${ld.linea.programa}, proyecto=${ld.linea.proyecto}, monto=${monto})}">
+                                <i class="bi bi-bookmark-plus"></i> Apartar
+                            </a>
+                            <a class="btn-contorno btn-chico"
+                               th:if="${montoPago != null && ld.alcanza}"
+                               th:href="@{/dafim/presupuesto/transferencias(origen=${ld.linea.id}, monto=${monto})}">
+                                <i class="bi bi-arrow-left-right"></i> Transferir
+                            </a>
+                            <a class="btn-contorno btn-chico"
+                               th:if="${montoPago == null || !ld.alcanza}"
+                               th:href="@{/dafim/presupuesto/transferencias(origen=${ld.linea.id})}">
+                                <i class="bi bi-arrow-left-right"></i> Transferir
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div>
+    </div>
+
+</div>
+</body>
+</html>

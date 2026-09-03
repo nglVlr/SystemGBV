@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ingresar · Sistema Granados</title>
+    <link rel="icon" type="image/png" th:href="@{/img/logo.png}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="pagina-login">
+
+    <section class="login-marca">
+        <div>
+            <img class="escudo" th:src="@{/img/logo.png}" alt="Escudo de Granados">
+            <h1>Sistema Integral<br>Municipalidad de Granados</h1>
+            <p class="descripcion">
+                Plataforma interna de la municipalidad: DAFIM (compras directas y
+                paquetes de facturas) y Recursos Humanos (personal y permisos).
+            </p>
+        </div>
+        <div class="sello-legal">
+            Información de oficio · Art. 10, Numeral 11 · Ley de Acceso a la
+            Información Pública
+        </div>
+    </section>
+
+    <section class="login-zona">
+        <div class="login-caja">
+            <h2>Ingresar al sistema</h2>
+            <p class="subtitulo">Usa el usuario y contraseña que te asignaron.</p>
+
+            <div th:if="${param.error}" class="aviso aviso-error" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div>Usuario o contraseña incorrectos, o el usuario esta inactivo.</div>
+            </div>
+            <div th:if="${param.logout}" class="aviso aviso-exito" role="status">
+                <i class="bi bi-check-circle"></i>
+                <div>Sesion cerrada correctamente.</div>
+            </div>
+
+            <div class="tarjeta">
+                <form th:action="@{/login}" method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="username"
+                               name="username" autocomplete="username" autofocus required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="password"
+                               name="password" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="btn-jade w-100 justify-content-center">
+                        <i class="bi bi-box-arrow-in-right"></i> Entrar
+                    </button>
+                </form>
+            </div>
+
+            <p class="texto-suave texto-chico">
+                Si olvidaste tu contraseña, pide al administrador del sistema que
+                te asigne una nueva.
+            </p>
+        </div>
+    </section>
+</div>
+</body>
+</html>

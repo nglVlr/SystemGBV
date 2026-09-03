@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Recursos Humanos', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">Modulo RRHH</div>
+        <h1>Recursos Humanos</h1>
+        <div class="detalle">Personal, permisos y constancias.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="rejilla rejilla-3 mb-22">
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Personal activo</div>
+            <div class="valor numeros" th:text="${empleadosActivos}">0</div>
+            <div class="nota">empleados y contratistas</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Permisos pendientes</div>
+            <div class="valor numeros" th:text="${pendientes}">0</div>
+            <div class="nota">esperando aprobación</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Aprobados este mes</div>
+            <div class="valor numeros" th:text="${aprobadosMes}">0</div>
+            <div class="nota">permisos que inician este mes</div>
+        </div>
+    </div>
+
+    <h2 class="titulo-ops">Operaciones</h2>
+    <div class="rejilla rejilla-3">
+        <a class="tarjeta-accion" th:href="@{/rrhh/permisos/nuevo}">
+            <div class="icono"><i class="bi bi-calendar-plus"></i></div>
+            <h3>Registrar permiso</h3>
+            <p>IGSS, personal, vacaciones, luto, comisión oficial... por días
+               completos o por horas.</p>
+        </a>
+        <a class="tarjeta-accion" th:href="@{/rrhh/permisos(estado='SOLICITADO')}">
+            <div class="icono"><i class="bi bi-check2-square"></i></div>
+            <h3>Aprobar permisos</h3>
+            <p>Bandeja de solicitudes pendientes. Aprueba o rechaza y genera la
+               constancia para el expediente.</p>
+        </a>
+        <a class="tarjeta-accion" th:href="@{/rrhh/empleados}">
+            <div class="icono"><i class="bi bi-people"></i></div>
+            <h3>Personal</h3>
+            <p>Alta y consulta de empleados: cargo, dependencia, renglón del
+               puesto y fecha de ingreso.</p>
+        </a>
+    </div>
+
+</div>
+</body>
+</html>

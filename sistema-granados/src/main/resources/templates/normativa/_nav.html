@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="cascaron" class="cascaron-presupuesto no-imprimir"
+     th:with="u=${uri}">
+    <nav class="pestanias-mod" aria-label="Secciones de normativa">
+        <a th:href="@{/normativa}"
+           class="pestania"
+           th:classappend="${u == '/normativa' or u == '/normativa/'} ? 'activa'">
+            <i class="bi bi-journal-bookmark"></i> Indice
+        </a>
+        <a th:href="@{/normativa/laip}"
+           class="pestania"
+           th:classappend="${u == '/normativa/laip'} ? 'activa'">
+            <i class="bi bi-eye"></i> LAIP
+        </a>
+        <a th:href="@{/normativa/codigo-municipal}"
+           class="pestania"
+           th:classappend="${u == '/normativa/codigo-municipal'} ? 'activa'">
+            <i class="bi bi-building"></i> Municipal
+        </a>
+        <a th:href="@{/normativa/contrataciones}"
+           class="pestania"
+           th:classappend="${u == '/normativa/contrataciones'} ? 'activa'">
+            <i class="bi bi-file-earmark-check"></i> Contrataciones
+        </a>
+        <a th:href="@{/normativa/presupuesto}"
+           class="pestania"
+           th:classappend="${u == '/normativa/presupuesto'} ? 'activa'">
+            <i class="bi bi-cash-stack"></i> Presupuesto
+        </a>
+        <a th:href="@{/normativa/trabajo}"
+           class="pestania"
+           th:classappend="${u == '/normativa/trabajo'} ? 'activa'">
+            <i class="bi bi-briefcase"></i> Trabajo
+        </a>
+        <a th:href="@{/normativa/probidad}"
+           class="pestania"
+           th:classappend="${u == '/normativa/probidad'} ? 'activa'">
+            <i class="bi bi-shield-check"></i> Probidad
+        </a>
+    </nav>
+</div>
+
+</body>
+</html>

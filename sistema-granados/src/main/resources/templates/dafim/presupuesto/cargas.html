@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Historial de cargas', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>Historial</h1>
+        <div class="detalle">
+            Solo la carga Activa de cada tipo alimenta las consultas.
+            Las demas quedan de respaldo en historial: volver a subir un PDF
+            no duplica las lineas de la activa.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <h2 class="h2-seccion">Ejecucion de egresos</h2>
+    <div class="tarjeta vacio-modulo" th:if="${#lists.isEmpty(cargas)}">
+        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+        <h2>No hay PDF de ejecucion</h2>
+        <p class="subtitulo">Sube el reporte de SICOIN para consultar renglones y fuentes.</p>
+        <a th:href="@{/dafim/presupuesto/cargar}" class="btn-jade">
+            <i class="bi bi-upload"></i> Ir a Cargas
+        </a>
+    </div>
+    <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(cargas)}">
+        <table class="tabla-datos tabla-zebra tabla-hover">
+            <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Archivo</th>
+                <th>Periodo</th>
+                <th>Usuario</th>
+                <th class="centrado">Lineas</th>
+                <th class="monto">Vigente Q</th>
+                <th class="centrado">Estado</th>
+                <th class="centrado">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${cargas}">
+                <td class="numeros">
+                    <time th:if="${c.fechaCarga != null}"
+                          th:attr="data-fecha=${#temporals.formatISO(c.fechaCarga)}"
+                          th:text="${#temporals.format(c.fechaCarga,'dd/MM/yyyy HH:mm')}">fecha</time>
+                </td>
+                <td th:text="${#strings.abbreviate(c.nombreArchivo, 40)}">archivo</td>
+                <td class="numeros"
+                    th:text="(${c.periodoDesde != null} ? ${#temporals.format(c.periodoDesde,'dd/MM/yyyy')} : '?') + ' a ' + (${c.periodoHasta != null} ? ${#temporals.format(c.periodoHasta,'dd/MM/yyyy')} : '?')">periodo</td>
+                <td th:text="${c.usuario}">usuario</td>
+                <td class="centrado numeros" th:text="${c.totalLineas}">0</td>
+                <td class="monto numeros"
+                    th:text="${#numbers.formatDecimal(c.totalVigente ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                <td class="centrado">
+                    <span class="insignia"
+                          th:classappend="${c.estado == 'ACTIVA'} ? 'insignia-jade' : 'insignia-neutra'"
+                          th:text="${c.estado == 'ACTIVA'} ? 'Activa' : 'En historial'">Activa</span>
+                </td>
+                <td class="centrado">
+                    <form th:if="${#lists.size(cargas) > 1}"
+                          th:action="@{/dafim/presupuesto/cargas/{id}/eliminar(id=${c.id})}"
+                          method="post" class="sin-margen"
+                          th:attr="data-confirmar='Eliminar la carga ' + ${c.nombreArchivo} + '? Si es la activa, se usara la mas reciente que quede.'">
+                        <button type="submit" class="btn-peligro btn-chico">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
+
+    <h2 class="h2-seccion-caja">Boletin de caja</h2>
+    <div class="tarjeta vacio-modulo" th:if="${#lists.isEmpty(cargasCaja)}">
+        <i class="bi bi-cash-coin" aria-hidden="true"></i>
+        <h2>No hay boletin de caja</h2>
+        <p class="subtitulo">Subelo para ver el dinero real por fuente.</p>
+        <a th:href="@{/dafim/presupuesto/cargar}" class="btn-jade">
+            <i class="bi bi-upload"></i> Ir a Cargas
+        </a>
+    </div>
+    <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(cargasCaja)}">
+        <table class="tabla-datos tabla-zebra tabla-hover">
+            <thead>
+            <tr>
+                <th>Fecha carga</th>
+                <th>Archivo</th>
+                <th>Corte</th>
+                <th>Usuario</th>
+                <th class="centrado">Cuentas</th>
+                <th class="monto">Total Q</th>
+                <th class="centrado">Estado</th>
+                <th class="centrado">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${cargasCaja}">
+                <td class="numeros">
+                    <time th:if="${c.fechaCarga != null}"
+                          th:attr="data-fecha=${#temporals.formatISO(c.fechaCarga)}"
+                          th:text="${#temporals.format(c.fechaCarga,'dd/MM/yyyy HH:mm')}">fecha</time>
+                </td>
+                <td th:text="${#strings.abbreviate(c.nombreArchivo, 40)}">archivo</td>
+                <td class="numeros"
+                    th:text="${c.fechaCorte != null} ? ${#temporals.format(c.fechaCorte,'dd/MM/yyyy')} : '—'">corte</td>
+                <td th:text="${c.usuario}">usuario</td>
+                <td class="centrado numeros" th:text="${c.totalCuentas}">0</td>
+                <td class="monto numeros"
+                    th:text="${#numbers.formatDecimal(c.totalNuevoSaldo ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                <td class="centrado">
+                    <span class="insignia"
+                          th:classappend="${c.estado == 'ACTIVA'} ? 'insignia-jade' : 'insignia-neutra'"
+                          th:text="${c.estado == 'ACTIVA'} ? 'Activa' : 'En historial'">Activa</span>
+                </td>
+                <td class="centrado">
+                    <form th:if="${#lists.size(cargasCaja) > 1}"
+                          th:action="@{/dafim/presupuesto/cargas-caja/{id}/eliminar(id=${c.id})}"
+                          method="post" class="sin-margen"
+                          th:attr="data-confirmar='Eliminar el boletin ' + ${c.nombreArchivo} + '? Si es el activo, se usara el mas reciente que quede.'">
+                        <button type="submit" class="btn-peligro btn-chico">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

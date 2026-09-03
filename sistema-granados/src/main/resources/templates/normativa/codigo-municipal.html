@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Codigo Municipal', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{normativa/_nav :: cascaron}"></div>
+
+    <div class="folio">
+        <div class="ceja">Normativa · Gobierno local</div>
+        <h1>Codigo Municipal</h1>
+        <div class="detalle">Organizacion, autonomia y hacienda del municipio.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <p class="norma-meta">Decreto 12-2002 · Congreso de la Republica de Guatemala</p>
+        <div class="texto-legal">
+            <p>
+                El municipio es autonomo. El Concejo Municipal es la autoridad
+                colegiada; el alcalde ejecuta. La administracion financiera no es
+                un adorno: es el medio para cobrar, presupuestar, comprar y rendir
+                cuentas.
+            </p>
+
+            <h3>Hacienda y DAFIM</h3>
+            <p>
+                La Direccion de Administracion Financiera Integrada Municipal (DAFIM)
+                concentra presupuesto, contabilidad, tesoreria y compras. Este
+                sistema es la herramienta de esa direccion: no sustituye al Concejo
+                ni a SICOIN.
+            </p>
+            <ul>
+                <li>El presupuesto municipal lo aprueba el Concejo; DAFIM lo ejecuta y registra.</li>
+                <li>Las compras siguen la Ley de Contrataciones, no un reglamento interno suelto.</li>
+                <li>Los informes de oficio (LAIP) salen de datos que DAFIM ya tiene que producir.</li>
+            </ul>
+
+            <h3>Personal municipal</h3>
+            <p>
+                El Concejo y el alcalde definen plazas y renglones (011, 022, 029…).
+                El modulo <a th:href="@{/rrhh}">RRHH</a> lleva la plantilla y los
+                permisos; no crea plazas por si mismo.
+            </p>
+
+            <h3>Lo que no hace esta pantalla</h3>
+            <p>
+                No es el codigo completo ni el reglamento interno. Sirve para que
+                quien opera el sistema sepa de donde nace DAFIM y por que el
+                presupuesto y las compras viven juntos.
+            </p>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

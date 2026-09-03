@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Donde pagar', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>¿Con que pago esto?</h1>
+        <div class="detalle">Escribe el gasto, mira en que fuente queda saldo libre y apartalo para armar el pago.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta vacio-modulo" th:if="${!hayCarga}">
+        <i class="bi bi-bank" aria-hidden="true"></i>
+        <h2>Aun no hay presupuesto cargado</h2>
+        <p class="subtitulo">
+            Primero sube el PDF de ejecucion de egresos en Cargas.
+        </p>
+        <a th:href="@{/dafim/presupuesto/cargar}" class="btn-jade">
+            <i class="bi bi-file-earmark-pdf"></i> Ir a Cargas
+        </a>
+    </div>
+
+    <th:block th:if="${hayCarga}">
+
+        <div class="tarjeta">
+            <div class="buscador-caja">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <form th:action="@{/dafim/presupuesto/donde-pagar}" method="get"
+                      class="flex-buscador"
+                      data-filtro>
+                    <input type="hidden" name="saldo" th:value="${saldo}">
+                    <input type="hidden" name="banco" th:value="${banco}">
+                    <label class="solo-lector" for="fBuscarGasto">Tipo de gasto o renglon</label>
+                    <input type="search" id="fBuscarGasto" name="q" class="form-control flex-crece" th:value="${q}" autofocus
+                           data-filtro-vivo data-filtro-q
+                           placeholder="Ej.: camionadas, arrendamiento, cemento, dietas..."
+                           aria-label="Tipo de gasto o codigo de renglon">
+                    <label class="solo-lector" for="fMontoPago">Monto a pagar</label>
+                    <input type="text" id="fMontoPago" name="monto" class="form-control flex-monto" th:value="${monto}"
+                           placeholder="Monto a pagar Q (opcional)" inputmode="decimal"
+                           aria-label="Monto a pagar en quetzales">
+                    <label class="filtro-check" th:if="${montoPago != null}">
+                        <input type="checkbox" name="soloPres" value="1" th:checked="${soloPres}">
+                        solo donde presupuesto alcanza
+                    </label>
+                    <label class="filtro-check" th:if="${montoPago != null and hayBoletin}">
+                        <input type="checkbox" name="soloBanco" value="1" th:checked="${soloBanco}">
+                        solo donde banco alcanza
+                    </label>
+                    <button type="submit" class="btn-jade">
+                        <i class="bi bi-search-heart"></i> Buscar fuente
+                    </button>
+                </form>
+            </div>
+            <div th:replace="~{dafim/presupuesto/_filtros :: dondePagar}"></div>
+            <p class="subtitulo sin-margen" th:if="${resultados == null}">
+                Por tipo de gasto o por codigo de renglon (154, 274...).
+                Con monto, se marca en cuales fuentes alcanza.
+            </p>
+            <p class="contador-filtro" th:if="${resultados != null and !#lists.isEmpty(resultados)}"
+               th:text="${#lists.size(resultados)} + (${#lists.size(resultados) == 1} ? ' renglon' : ' renglones')">0 renglones</p>
+        </div>
+
+        <div class="aviso aviso-error" role="alert" th:if="${errorMonto != null}">
+            <i class="bi bi-exclamation-triangle"></i>
+            <div th:text="${errorMonto}">monto invalido</div>
+        </div>
+
+        <div class="tarjeta vacio-modulo" th:if="${resultados != null && #lists.isEmpty(resultados)}">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <h2>0 resultados para <span th:text="${q}">consulta</span></h2>
+            <ul class="filtro-sugerencias">
+                <li>Prueba el codigo de 3 digitos (154, 274, 029...).</li>
+                <li>Puedes escribir con o sin tilde: el buscador las ignora.</li>
+                <li>Quita “solo donde alcanza” o usa Limpiar todo.</li>
+            </ul>
+            <a th:href="@{/dafim/presupuesto/donde-pagar}" class="btn-neutro">Limpiar todo</a>
+        </div>
+
+        <div class="tarjeta" th:each="b : ${resultados}">
+            <h2>
+                <span class="codigo-con-copia">
+                    <span class="insignia insignia-pino" th:text="${b.renglon}">000</span>
+                    <button type="button" class="btn-copiar"
+                            th:attr="data-copiar=${b.renglon}"
+                            aria-label="Copiar codigo de renglon" title="Copiar">
+                        <i class="bi bi-clipboard" aria-hidden="true"></i>
+                    </button>
+                </span>
+                <strong th:text="${b.descripcion}">descripcion</strong>
+            </h2>
+            <p class="subtitulo">
+                Disponible en el renglon:
+                <strong th:classappend="${b.totalDisponible > 0} ? 'texto-dorado' : ''"
+                        th:text="'Q ' + ${#numbers.formatDecimal(b.totalDisponible ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0.00</strong>
+            </p>
+
+            <div class="tabla-envoltura scroll-alto">
+                <table class="tabla-datos tabla-zebra tabla-hover">
+                    <thead>
+                    <tr>
+                        <th>Fuente</th>
+                        <th>Programa / Proyecto</th>
+                        <th class="monto">Saldo libre Q</th>
+                        <th class="monto">Dinero real Q</th>
+                        <th class="centrado">Estado</th>
+                        <th class="centrado">Accion</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="l : ${b.lineas}"
+                        th:attr="data-pres=${l.alcanza ? '1' : '0'}, data-banco=${l.alcanzaBanco ? '1' : '0'}">
+                        <td>
+                            <div class="codigo-con-copia">
+                                <a class="enlace-codigo" th:href="@{/dafim/presupuesto/fuentes/{c}(c=${l.fuente})}">
+                                    <strong th:text="${l.fuente}">00-0000-0000</strong>
+                                </a>
+                                <button type="button" class="btn-copiar"
+                                        th:attr="data-copiar=${l.fuente}"
+                                        aria-label="Copiar codigo de fuente" title="Copiar">
+                                    <i class="bi bi-clipboard" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <div class="texto-suave texto-12"
+                                 th:if="${!#strings.isEmpty(l.nombreFuente)}"
+                                 th:text="${l.nombreFuente}">nombre de la fuente</div>
+                        </td>
+                        <td>
+                            <div th:if="${!#strings.isEmpty(l.programa)}"
+                                 th:text="${l.programa}">programa</div>
+                            <div class="texto-suave texto-12"
+                                 th:if="${!#strings.isEmpty(l.proyecto)}"
+                                 th:text="${l.proyecto}">proyecto</div>
+                            <div class="texto-suave texto-12"
+                                 th:if="${!#strings.isEmpty(l.actividadObra)}"
+                                 th:text="'act. ' + ${l.actividadObra}">actividad</div>
+                            <span class="texto-suave"
+                                  th:if="${#strings.isEmpty(l.programa) && #strings.isEmpty(l.proyecto)}">&mdash;</span>
+                        </td>
+                        <td class="monto numeros">
+                            <span th:text="${#numbers.formatDecimal(l.saldoDisponible ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                            <div class="texto-suave texto-pie-11"
+                                 th:if="${l.apartadoPresupuesto > 0}"
+                                 th:text="'apartado Q ' + ${#numbers.formatDecimal(l.apartadoPresupuesto, 1, 'COMMA', 2, 'POINT')}">apartado</div>
+                        </td>
+                        <td class="monto numeros"
+                            th:classappend="${cargaCaja == null} ? 'texto-suave' : ''">
+                            <span th:text="${cargaCaja == null} ? '—' : ${#numbers.formatDecimal(l.dineroReal ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                            <div class="texto-suave texto-pie-11"
+                                 th:if="${cargaCaja != null && !#strings.isEmpty(l.etiquetaTipoDinero)}"
+                                 th:text="${l.etiquetaTipoDinero}">funcionamiento</div>
+                        </td>
+                        <td class="centrado">
+                            <span class="insignia insignia-rojo"
+                                  th:if="${l.saldoDisponible <= 0}">agotada</span>
+                            <span class="insignia insignia-jade"
+                                  th:if="${l.saldoDisponible > 0 && l.alcanza}">pres. alcanza</span>
+                            <span class="insignia insignia-ambar"
+                                  th:if="${l.saldoDisponible > 0 && !l.alcanza}">pres. no alcanza</span>
+                            <span class="insignia insignia-jade"
+                                  th:if="${cargaCaja != null && l.alcanzaBanco}">banco alcanza</span>
+                            <span class="insignia insignia-ambar"
+                                  th:if="${cargaCaja != null && !l.alcanzaBanco}">banco no alcanza</span>
+                        </td>
+                        <td class="centrado">
+                            <a class="btn-jade btn-chico"
+                               th:if="${l.saldoDisponible > 0}"
+                               th:href="@{/dafim/presupuesto/apartar(lineaId=${l.id}, renglon=${b.renglon}, fuente=${l.fuente}, actividadObra=${l.actividadObra}, programa=${l.programa}, proyecto=${l.proyecto}, monto=${monto}, concepto=${q}, q=${q})}">
+                                <i class="bi bi-bookmark-plus"></i> Apartar
+                            </a>
+                            <span class="texto-suave" th:if="${l.saldoDisponible <= 0}">—</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="subtitulo sin-margen" th:if="${montoPago != null}"
+               th:text="'Lineas donde el presupuesto alcanza para Q ' + ${#numbers.formatDecimal(montoPago, 1, 'COMMA', 2, 'POINT')} + ': ' + ${b.lineas.?[alcanza].size()} + ' de ' + ${b.lineas.size()}">
+                leyenda de cobertura</p>
+        </div>
+
+    </th:block>
+
+</div>
+</body>
+</html>

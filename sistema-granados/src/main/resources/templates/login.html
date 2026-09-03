@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ingresar · Sistema Granados</title>
+    <link rel="icon" type="image/png" th:href="@{/img/logo.png}">
+    <script th:replace="~{layout/tema :: antiflash}"></script>
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css(v=20260902e)}">
+</head>
+<body class="cuerpo-login">
+<a class="saltar-contenido" href="#formularioLogin">Saltar al formulario</a>
+<canvas id="fondo3d" aria-hidden="true"></canvas>
+<img id="fondo-escudo" th:src="@{/img/logo.png}" alt="" aria-hidden="true">
+<div class="veladura" aria-hidden="true"></div>
+<div class="grano-cine" aria-hidden="true"></div>
+<div class="cursor-raiz" id="cursorRaiz" aria-hidden="true">
+<div class="cursor-seguidor" id="cursorSeguidor"></div>
+<div class="cursor-punto" id="cursorPunto"></div>
+</div>
+<div class="barras-cine" aria-hidden="true"></div>
+<div class="foco-login" id="focoLogin" aria-hidden="true"></div>
+
+<div class="pagina-login">
+
+    <header class="login-top revelar">
+        <img class="escudo-mini" th:src="@{/img/logo.png}" alt="" aria-hidden="true">
+        <span>Municipalidad de Granados</span>
+        <span class="login-top-sep" aria-hidden="true"></span>
+        <span>Baja Verapaz</span>
+        <button th:replace="~{layout/tema :: boton}"></button>
+    </header>
+
+    <section class="login-hero">
+        <p class="ceja-login revelar">Sistema integral · Acceso restringido</p>
+        <h1 class="revelar">Municipalidad<br>de Granados</h1>
+        <p class="descripcion revelar">
+            Plataforma financiera municipal. DAFIM, presupuesto y recursos humanos.
+        </p>
+    </section>
+
+    <section class="login-zona">
+        <div class="login-caja">
+            <h2 class="revelar">Ingresar</h2>
+            <p class="subtitulo revelar">Credenciales institucionales.</p>
+
+            <div th:if="${param.error}" id="loginError" class="aviso aviso-error" role="alert">
+                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                <div>Usuario o contraseña incorrectos, o el usuario está inactivo.</div>
+            </div>
+            <div th:if="${param.logout}" class="aviso aviso-exito" role="status">
+                <i class="bi bi-check-circle" aria-hidden="true"></i>
+                <div>Sesión cerrada correctamente.</div>
+            </div>
+
+            <div class="tarjeta tarjeta-login revelar">
+                <form id="formularioLogin" th:action="@{/login}" method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="username"
+                               name="username" autocomplete="username" autofocus required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="password"
+                               name="password" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="btn-jade w-100 justify-content-center">
+                        <i class="bi bi-box-arrow-in-right"></i> Entrar
+                    </button>
+                </form>
+            </div>
+
+            <p class="texto-suave texto-chico revelar">
+                Si olvidaste tu contraseña, pide una nueva al administrador.
+            </p>
+        </div>
+    </section>
+
+    <footer class="login-pie revelar">
+        Información de oficio · Art. 10, Numeral 11 · LAIP
+        (Decreto 57-2008)
+    </footer>
+</div>
+
+<script th:src="@{/js/fondo3d.js(v=20260902e)}"></script>
+<script th:src="@{/js/app.js(v=20260902e)}"></script>
+</body>
+</html>

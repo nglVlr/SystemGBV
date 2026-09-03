@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Constancia de permiso', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio no-imprimir">
+        <div class="ceja">RRHH · Permisos</div>
+        <h1>Constancia de permiso</h1>
+        <div class="detalle">
+            Se imprime sin encabezados del sistema, lista para hoja membretada.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="acciones-fila no-imprimir" style="margin-bottom:16px;">
+        <a th:href="@{/rrhh/permisos}" class="btn-neutro">
+            <i class="bi bi-arrow-left"></i> Volver a la bandeja
+        </a>
+        <a th:href="@{/rrhh}" class="btn-neutro">
+            <i class="bi bi-house-heart"></i> Inicio RRHH
+        </a>
+        <a th:if="${tieneAdjunto}" target="_blank"
+           th:href="@{/rrhh/permisos/{id}/adjunto(id=${p.id})}" class="btn-neutro">
+            <i class="bi bi-paperclip"></i> Ver permiso escaneado
+        </a>
+        <button class="btn-jade" onclick="window.print()">
+            <i class="bi bi-printer"></i> Imprimir
+        </button>
+    </div>
+
+    <div class="tarjeta documento-membretado" id="constancia"
+         style="max-width:780px; margin:0 auto; padding:46px 56px;">
+
+        <div style="text-align:center; margin-bottom:26px;">
+            <div class="no-imprimir" style="font-weight:700;">
+                MUNICIPALIDAD DE GRANADOS, BAJA VERAPAZ
+                <div class="texto-suave" style="font-weight:400;">Oficina de Recursos Humanos</div>
+            </div>
+            <h2 style="margin-top:16px; letter-spacing:.14em;">CONSTANCIA DE PERMISO</h2>
+        </div>
+
+        <p style="line-height:2.1; text-align:justify; font-size:15px;">
+            La Oficina de Recursos Humanos de la Municipalidad de Granados,
+            departamento de Baja Verapaz, por este medio
+            <strong>HACE CONSTAR:</strong> que a
+            <strong th:text="${p.empleado.nombre}">NOMBRE</strong><span
+                th:if="${!#strings.isEmpty(p.empleado.cargo)}">,
+            quien se desempeña como
+            <strong th:text="${p.empleado.cargo}">cargo</strong></span><span
+                th:if="${!#strings.isEmpty(p.empleado.dependencia)}">
+            en <strong th:text="${p.empleado.dependencia}">dependencia</strong></span>,
+            se le concedió permiso de tipo
+            <strong th:text="${p.tipo}">TIPO</strong>,
+            <strong th:text="${p.conGoce} ? 'CON goce de salario' : 'SIN goce de salario'">goce</strong>,
+            <span th:if="${!p.porHoras}">
+                del <strong th:text="${#temporals.format(p.fechaInicio,'dd/MM/yyyy')}">i</strong>
+                al <strong th:text="${#temporals.format(p.fechaFin,'dd/MM/yyyy')}">f</strong>
+                (<span th:text="${p.dias}">1</span> día(s)),
+            </span>
+            <span th:if="${p.porHoras}">
+                el día <strong th:text="${#temporals.format(p.fechaInicio,'dd/MM/yyyy')}">i</strong>
+                en horario de <strong th:text="${p.horaInicio}">h</strong>
+                a <strong th:text="${p.horaFin}">h</strong>,
+            </span>
+            <span th:if="${!#strings.isEmpty(p.motivo)}">
+                por el siguiente motivo:
+                <em th:text="${p.motivo}">motivo</em>.
+            </span>
+            <span th:if="${#strings.isEmpty(p.motivo)}">.</span>
+        </p>
+
+        <p style="line-height:2.1; text-align:justify; font-size:15px; margin-top:14px;">
+            Y para los usos que al interesado convengan, se extiende la presente
+            constancia en Granados, Baja Verapaz, el
+            <strong th:text="${p.resueltoEn != null}
+                    ? ${#temporals.format(p.resueltoEn,'dd/MM/yyyy')}
+                    : ${#temporals.format(p.fechaInicio,'dd/MM/yyyy')}">fecha</strong>.
+        </p>
+
+        <p class="texto-suave no-imprimir" style="margin-top:10px;">
+            Días de permiso aprobados del empleado en el año:
+            <strong th:text="${diasEnAnio}">0</strong>.
+        </p>
+
+        <div style="margin-top:110px; text-align:center;">
+            <div style="display:inline-block; min-width:min(320px, 100%);">
+                <div style="border-top:1.5px solid #333; padding-top:8px;">
+                    <div th:if="${!#strings.isEmpty(encargadaNombre)}"
+                         style="font-weight:700;" th:text="${encargadaNombre}">Nombre</div>
+                    <div th:text="${encargadaCargo}">Encargada de Recursos Humanos</div>
+                    <div>Municipalidad de Granados, Baja Verapaz</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

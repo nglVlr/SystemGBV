@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Personal', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">RRHH · Personal</div>
+        <h1>Personal</h1>
+        <div class="detalle">Plantilla municipal: 011, 022, 029, 031, 035…</div>
+        <div class="filete"></div>
+    </div>
+
+    <details class="panel-desplegable">
+        <summary>
+            <i class="bi bi-person-plus" style="color:var(--jade);"></i>
+            Agregar empleado
+            <i class="bi bi-chevron-right chevron"></i>
+        </summary>
+        <div class="panel-cuerpo">
+        <form th:action="@{/rrhh/empleados/guardar}" method="post"
+              data-procesando="Guardando...">
+            <div class="rejilla rejilla-3">
+                <div class="campo">
+                    <label for="nombre" class="form-label">Nombre completo *</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre"
+                           required minlength="3" placeholder="MAYEN,CARDONA,,ANGEL,AMALIEL">
+                </div>
+                <div class="campo">
+                    <label for="cargo" class="form-label">Cargo</label>
+                    <input type="text" class="form-control" id="cargo" name="cargo"
+                           placeholder="Asistente de presupuesto">
+                </div>
+                <div class="campo">
+                    <label for="dependencia" class="form-label">Dependencia</label>
+                    <input type="text" class="form-control" id="dependencia" name="dependencia"
+                           placeholder="DAFIM">
+                </div>
+            </div>
+            <div class="rejilla rejilla-3 mt-12">
+                <div class="campo">
+                    <label for="renglon" class="form-label">Renglon del puesto</label>
+                    <input type="text" class="form-control numeros" id="renglon" name="renglon"
+                           placeholder="029" pattern="\d{3}" title="3 digitos, ej. 011 o 029">
+                </div>
+                <div class="campo">
+                    <label for="dpi" class="form-label">DPI</label>
+                    <input type="text" class="form-control numeros" id="dpi" name="dpi"
+                           placeholder="1234567890101" pattern="\d{13}" title="13 digitos">
+                </div>
+                <div class="campo">
+                    <label for="fechaIngreso" class="form-label">Fecha de ingreso</label>
+                    <input type="date" class="form-control" id="fechaIngreso" name="fechaIngreso">
+                </div>
+            </div>
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-plus-circle"></i> Guardar
+                </button>
+            </div>
+        </form>
+        </div>
+    </details>
+
+    <div class="tarjeta">
+        <form th:action="@{/rrhh/empleados}" method="get"
+              class="acciones-fila mb-14" data-filtro="1">
+            <label class="solo-lector" for="qEmpleados">Buscar personal</label>
+            <input type="search" class="form-control flex-crece" id="qEmpleados" name="q" th:value="${q}"
+                   placeholder="Buscar por nombre, cargo, dependencia o renglón...">
+            <button type="submit" class="btn-jade"><i class="bi bi-search"></i> Buscar</button>
+            <a th:href="@{/rrhh/empleados}" class="btn-neutro">Limpiar</a>
+            <a th:href="@{/rrhh}" class="btn-neutro"><i class="bi bi-arrow-left"></i> Inicio RRHH</a>
+        </form>
+
+        <h2>Personal registrado
+            <span class="insignia insignia-jade" th:text="${#lists.size(empleados)}">0</span>
+        </h2>
+        <p class="subtitulo" th:if="${#lists.isEmpty(empleados)}">
+            Todavia no hay empleados. Agrega el primero con el formulario de arriba.
+        </p>
+        <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(empleados)}">
+            <table class="tabla-datos">
+                <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Cargo</th>
+                    <th>Dependencia</th>
+                    <th>Renglon</th>
+                    <th>Ingreso</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="e : ${empleados}">
+                    <td class="celda-proveedor" th:text="${e.nombre}" th:title="${e.nombre}">nombre</td>
+                    <td class="celda-desc" th:text="${e.cargo}">cargo</td>
+                    <td th:text="${e.dependencia}">dep</td>
+                    <td class="numeros" th:text="${e.renglon}">029</td>
+                    <td class="numeros"
+                        th:text="${e.fechaIngreso != null} ? ${#temporals.format(e.fechaIngreso,'dd/MM/yyyy')} : ''">f</td>
+                    <td>
+                        <span class="insignia insignia-jade" th:if="${e.activo}">activo</span>
+                        <span class="insignia" th:unless="${e.activo}">inactivo</span>
+                    </td>
+                    <td>
+                        <form th:action="@{/rrhh/empleados/{id}/toggle(id=${e.id})}"
+                              method="post" class="form-en-celda">
+                            <button type="submit" class="btn-neutro"
+                                    th:text="${e.activo} ? 'Dar de baja' : 'Reactivar'">baja</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

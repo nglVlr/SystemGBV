@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Permisos', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">RRHH · Permisos</div>
+        <h1>Bandeja de permisos</h1>
+        <div class="detalle">
+            <span th:text="${pendientes}">0</span> pendientes de aprobar.
+            Primero se registra, luego se aprueba o rechaza. La constancia
+            solo sale si esta aprobado.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="acciones-fila no-imprimir" style="margin-bottom:12px;">
+        <a th:href="@{/rrhh/permisos/nuevo}" class="btn-jade">
+            <i class="bi bi-calendar-plus"></i> Registrar permiso
+        </a>
+        <a th:href="@{/rrhh/empleados}" class="btn-neutro">Personal</a>
+    </div>
+
+    <div class="tarjeta">
+        <h2><i class="bi bi-funnel"></i> Filtros</h2>
+        <form th:action="@{/rrhh/permisos}" method="get" class="rejilla rejilla-4">
+            <div class="campo">
+                <label class="form-label" for="fEstado">Estado</label>
+                <select class="form-control" id="fEstado" name="estado">
+                    <option value="TODOS" th:selected="${estadoFiltro == 'TODOS'}">Todos</option>
+                    <option value="SOLICITADO" th:selected="${estadoFiltro == 'SOLICITADO'}">Pendientes</option>
+                    <option value="APROBADO" th:selected="${estadoFiltro == 'APROBADO'}">Aprobados</option>
+                    <option value="RECHAZADO" th:selected="${estadoFiltro == 'RECHAZADO'}">Rechazados</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label class="form-label" for="fEmpleado">Empleado</label>
+                <select class="form-control" id="fEmpleado" name="empleadoId">
+                    <option value="">Todos</option>
+                    <option th:each="e : ${empleados}" th:value="${e.id}"
+                            th:selected="${empleadoFiltro == e.id}"
+                            th:text="${e.nombre}"></option>
+                </select>
+            </div>
+            <div class="campo">
+                <label class="form-label" for="fTipo">Tipo</label>
+                <select class="form-control" id="fTipo" name="tipo">
+                    <option value="TODOS">Todos</option>
+                    <option th:selected="${tipoFiltro == 'IGSS'}" value="IGSS">IGSS</option>
+                    <option th:selected="${tipoFiltro == 'PERSONAL'}" value="PERSONAL">Personal</option>
+                    <option th:selected="${tipoFiltro == 'VACACIONES'}" value="VACACIONES">Vacaciones</option>
+                    <option th:selected="${tipoFiltro == 'LUTO'}" value="LUTO">Luto</option>
+                    <option th:selected="${tipoFiltro == 'MATERNIDAD'}" value="MATERNIDAD">Maternidad</option>
+                    <option th:selected="${tipoFiltro == 'ESTUDIO'}" value="ESTUDIO">Estudios</option>
+                    <option th:selected="${tipoFiltro == 'COMISION'}" value="COMISION">Comisión</option>
+                    <option th:selected="${tipoFiltro == 'OTRO'}" value="OTRO">Otro</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label class="form-label" for="fDesde">Desde</label>
+                <input type="date" class="form-control" id="fDesde" name="desde" th:value="${desde}">
+            </div>
+            <div class="campo">
+                <label class="form-label" for="fHasta">Hasta</label>
+                <input type="date" class="form-control" id="fHasta" name="hasta" th:value="${hasta}">
+            </div>
+            <div class="acciones-fila" style="grid-column:1/-1;">
+                <button type="submit" class="btn-jade"><i class="bi bi-funnel"></i> Filtrar</button>
+                <a th:href="@{/rrhh/permisos}" class="btn-neutro">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="tarjeta">
+        <div class="acciones-fila segmentos" style="margin-bottom:12px;">
+            <a th:href="@{/rrhh/permisos(estado='TODOS')}"
+               th:classappend="${estadoFiltro == 'TODOS'} ? 'btn-jade' : 'btn-neutro'">Todos</a>
+            <a th:href="@{/rrhh/permisos(estado='SOLICITADO')}"
+               th:classappend="${estadoFiltro == 'SOLICITADO'} ? 'btn-jade' : 'btn-neutro'">Pendientes</a>
+            <a th:href="@{/rrhh/permisos(estado='APROBADO')}"
+               th:classappend="${estadoFiltro == 'APROBADO'} ? 'btn-jade' : 'btn-neutro'">Aprobados</a>
+            <a th:href="@{/rrhh/permisos(estado='RECHAZADO')}"
+               th:classappend="${estadoFiltro == 'RECHAZADO'} ? 'btn-jade' : 'btn-neutro'">Rechazados</a>
+        </div>
+
+        <p class="subtitulo" th:if="${#lists.isEmpty(permisos)}">
+            No hay permisos en este filtro.
+        </p>
+
+        <div class="tabla-envoltura" th:if="${!#lists.isEmpty(permisos)}">
+            <table class="tabla-datos">
+                <thead>
+                <tr>
+                    <th>Empleado</th>
+                    <th>Tipo</th>
+                    <th>Del / al</th>
+                    <th>Dias</th>
+                    <th>Goce</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${permisos}">
+                    <td>
+                        <div th:text="${p.empleado.nombre}">nombre</div>
+                        <div class="texto-suave texto-chico" th:text="${p.motivo}">motivo</div>
+                        <div class="texto-suave texto-chico" th:if="${!#strings.isEmpty(p.observaciones)}"
+                             th:text="'Nota: ' + ${p.observaciones}"></div>
+                    </td>
+                    <td th:text="${p.tipo}">tipo</td>
+                    <td class="numeros">
+                        <span th:text="${#temporals.format(p.fechaInicio,'dd/MM/yyyy')}">i</span>
+                        <span th:if="${p.fechaFin != p.fechaInicio}"
+                              th:text="' – ' + ${#temporals.format(p.fechaFin,'dd/MM/yyyy')}"></span>
+                        <div class="texto-suave texto-chico" th:if="${p.porHoras}"
+                             th:text="${p.horaInicio} + ' a ' + ${p.horaFin}"></div>
+                    </td>
+                    <td class="numeros" th:text="${p.porHoras} ? 'horas' : ${p.dias}">1</td>
+                    <td th:text="${p.conGoce} ? 'Con goce' : 'Sin goce'">goce</td>
+                    <td>
+                        <span class="insignia insignia-jade"
+                              th:if="${p.estado == 'APROBADO'}">APROBADO</span>
+                        <span class="insignia insignia-ambar"
+                              th:if="${p.estado == 'SOLICITADO'}">PENDIENTE</span>
+                        <span class="insignia insignia-rojo"
+                              th:if="${p.estado == 'RECHAZADO'}">RECHAZADO</span>
+                    </td>
+                    <td>
+                        <div class="acciones-fila" th:if="${p.estado == 'SOLICITADO'}">
+                            <form th:action="@{/rrhh/permisos/{id}/aprobar(id=${p.id})}"
+                                  method="post" class="sin-margen">
+                                <button type="submit" class="btn-jade btn-chico">Aprobar</button>
+                            </form>
+                            <form th:action="@{/rrhh/permisos/{id}/rechazar(id=${p.id})}"
+                                  method="post" class="acciones-fila" style="flex-wrap:wrap;">
+                                <input type="text" name="observaciones" class="form-control"
+                                       placeholder="Motivo del rechazo *" required
+                                       maxlength="300" style="min-width:140px; max-width:220px;">
+                                <button type="submit" class="btn-neutro btn-chico">Rechazar</button>
+                            </form>
+                        </div>
+                        <a th:if="${p.estado == 'APROBADO'}"
+                           th:href="@{/rrhh/permisos/{id}/constancia(id=${p.id})}"
+                           class="btn-neutro btn-chico">
+                            <i class="bi bi-printer"></i> Constancia
+                        </a>
+                        <a th:if="${conAdjunto.contains(p.id)}" target="_blank"
+                           th:href="@{/rrhh/permisos/{id}/adjunto(id=${p.id})}"
+                           class="btn-neutro btn-chico" title="Ver permiso escaneado">
+                            <i class="bi bi-paperclip"></i> Escaneado
+                        </a>
+                        <form th:if="${!conAdjunto.contains(p.id)}"
+                              th:action="@{/rrhh/permisos/{id}/adjunto(id=${p.id})}"
+                              method="post" enctype="multipart/form-data"
+                              class="acciones-fila" style="margin-top:6px;">
+                            <input type="file" name="escaneado" class="form-control"
+                                   accept=".pdf,.jpg,.jpeg,.png"
+                                   style="max-width:190px; font-size:12px;" required>
+                            <button type="submit" class="btn-neutro btn-chico" title="Adjuntar escaneado">
+                                <i class="bi bi-paperclip"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

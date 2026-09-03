@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(titulo, contenido)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titulo} + ' · Sistema Granados'">Sistema Granados</title>
+    <link rel="icon" type="image/png" th:href="@{/img/logo.png}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="app-shell">
+
+    <!-- ============================ MENU LATERAL ============================ -->
+    <aside class="menu-lateral">
+        <div class="menu-marca">
+            <img class="escudo" th:src="@{/img/logo.png}" alt="Escudo de Granados">
+            <div class="menu-marca-texto">
+                <div class="nombre">Municipalidad de Granados</div>
+                <div class="lema">Baja Verapaz</div>
+            </div>
+        </div>
+
+        <nav class="menu-nav">
+            <div class="menu-seccion">General</div>
+            <a class="menu-item" th:href="@{/}"
+               th:classappend="${uri == '/'} ? 'activo'">
+                <i class="bi bi-grid-1x2"></i><span>Inicio</span>
+            </a>
+
+            <th:block sec:authorize="hasAnyRole('ADMIN_DAFIM','SUPERADMIN')">
+                <div class="menu-seccion">DAFIM</div>
+                <a class="menu-item" th:href="@{/dafim/compras}"
+                   th:classappend="${uri == '/dafim/compras'} ? 'activo'">
+                    <i class="bi bi-clipboard2-check"></i><span>Compras directas</span>
+                </a>
+                <a class="menu-item" th:href="@{/dafim/compras/procesar}"
+                   th:classappend="${#strings.startsWith(uri,'/dafim/compras/procesar')} ? 'activo'">
+                    <i class="bi bi-gear"></i><span>Procesar el mes</span>
+                </a>
+                <a class="menu-item" th:href="@{/dafim/paquetes}"
+                   th:classappend="${#strings.startsWith(uri,'/dafim/paquetes')} ? 'activo'">
+                    <i class="bi bi-collection"></i><span>Paquetes de facturas</span>
+                </a>
+                <a class="menu-item" th:href="@{/dafim/compras/buscar}"
+                   th:classappend="${#strings.startsWith(uri,'/dafim/compras/buscar')} ? 'activo'">
+                    <i class="bi bi-search"></i><span>Buscar en la BD</span>
+                </a>
+                <a class="menu-item" th:href="@{/dafim/compras/resumen}"
+                   th:classappend="${#strings.startsWith(uri,'/dafim/compras/resumen')} ? 'activo'">
+                    <i class="bi bi-bar-chart"></i><span>Resumen</span>
+                </a>
+            </th:block>
+
+            <th:block sec:authorize="hasAnyRole('ADMIN_RRHH','SUPERADMIN')">
+                <div class="menu-seccion">Recursos Humanos</div>
+                <a class="menu-item" th:href="@{/rrhh}"
+                   th:classappend="${uri == '/rrhh'} ? 'activo'">
+                    <i class="bi bi-house-heart"></i><span>Inicio RRHH</span>
+                </a>
+                <a class="menu-item" th:href="@{/rrhh/permisos}"
+                   th:classappend="${#strings.startsWith(uri,'/rrhh/permisos')} ? 'activo'">
+                    <i class="bi bi-check2-square"></i><span>Permisos</span>
+                </a>
+                <a class="menu-item" th:href="@{/rrhh/empleados}"
+                   th:classappend="${#strings.startsWith(uri,'/rrhh/empleados')} ? 'activo'">
+                    <i class="bi bi-people"></i><span>Personal</span>
+                </a>
+            </th:block>
+
+            <th:block sec:authorize="hasRole('SUPERADMIN')">
+                <div class="menu-seccion">Administración</div>
+                <a class="menu-item" th:href="@{/admin/usuarios}"
+                   th:classappend="${#strings.startsWith(uri,'/admin/usuarios')} ? 'activo'">
+                    <i class="bi bi-person-gear"></i><span>Usuarios</span>
+                </a>
+            </th:block>
+        </nav>
+
+        <div class="menu-pie">
+            DAFIM · Art. 10 Num. 11 LAIP
+        </div>
+    </aside>
+
+    <!-- =========================== ZONA PRINCIPAL ========================== -->
+    <div class="zona-principal">
+        <header class="barra-superior">
+            <button type="button" id="botonMenu" class="boton-menu"
+                    aria-label="Mostrar u ocultar el menú">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="barra-titulo" th:text="${titulo}">Página</div>
+            <div class="barra-derecha">
+                <div class="chip-usuario">
+                    <span class="inicial"
+                          th:text="${#strings.toUpperCase(#strings.substring(#authentication.name,0,1))}">U</span>
+                    <span th:text="${#authentication.name}">usuario</span>
+                </div>
+                <form th:action="@{/logout}" method="post" class="sin-margen">
+                    <button type="submit" class="boton-salir">
+                        <i class="bi bi-box-arrow-right"></i> Salir
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <main class="contenido">
+            <div th:if="${exito}" class="aviso aviso-exito" data-auto="1" role="status">
+                <i class="bi bi-check-circle"></i>
+                <div th:text="${exito}">Operación realizada.</div>
+            </div>
+            <div th:if="${error}" class="aviso aviso-error" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div th:text="${error}">Ocurrió un error.</div>
+            </div>
+
+            <th:block th:replace="${contenido}"/>
+        </main>
+
+        <footer class="pie">
+            Municipalidad de Granados, Baja Verapaz · Dirección de Administración
+            Financiera Integrada Municipal (DAFIM)
+        </footer>
+    </div>
+</div>
+
+<script th:src="@{/vendor/bootstrap/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

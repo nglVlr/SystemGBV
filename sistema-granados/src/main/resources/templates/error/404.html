@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('No encontrado', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+    <div class="pagina-error">
+        <div>
+            <div class="codigo">404</div>
+            <h1>Esta página no existe</h1>
+            <p>La dirección que abriste no corresponde a ninguna pantalla del
+               sistema.</p>
+            <a th:href="@{/}" class="btn-jade">
+                <i class="bi bi-house"></i> Volver al inicio
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

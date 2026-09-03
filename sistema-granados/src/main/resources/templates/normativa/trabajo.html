@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Codigo de Trabajo', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{normativa/_nav :: cascaron}"></div>
+
+    <div class="folio">
+        <div class="ceja">Normativa · Recursos humanos</div>
+        <h1>Codigo de Trabajo</h1>
+        <div class="detalle">Jornada, vacaciones, IGSS y permisos del personal municipal.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <p class="norma-meta">Decreto 1441 · Congreso de la Republica de Guatemala</p>
+        <div class="texto-legal">
+            <p>
+                Rige la relacion de trabajo. El personal municipal combina este
+                codigo con el Codigo Municipal y, segun el renglón, con regimenes
+                propios (011 vs 029). El modulo RRHH no sustituye al Ministerio
+                de Trabajo ni al IGSS.
+            </p>
+
+            <h3>Permisos que registra el sistema</h3>
+            <ul>
+                <li><strong>IGSS.</strong> Cita o suspension. Adjuntar el papel o el escaneo.</li>
+                <li><strong>Vacaciones.</strong> Periodo anual; el codigo fija minimos, no el boton de la pantalla.</li>
+                <li><strong>Luto, maternidad/paternidad, estudios, comision oficial.</strong></li>
+                <li><strong>Asunto personal.</strong> Con o sin goce, segun lo que apruebe la jefatura.</li>
+            </ul>
+            <p>
+                Un permiso queda en SOLICITADO hasta que RRHH lo aprueba o rechaza.
+                La constancia imprimible es el respaldo del expediente, no el acto
+                administrativo en si.
+            </p>
+
+            <h3>Jornada y horas</h3>
+            <p>
+                El formulario permite permiso por dias o por horas. Las horas no
+                convierten un dia de vacaciones en medio dia si la jefatura no lo
+                autoriza: el sistema solo guarda lo que se le pide.
+            </p>
+
+            <h3>En este sistema</h3>
+            <ul>
+                <li><a th:href="@{/rrhh/permisos/nuevo}">Registrar permiso</a></li>
+                <li><a th:href="@{/rrhh/permisos}">Bandeja de aprobacion</a></li>
+                <li><a th:href="@{/rrhh/empleados}">Plantilla (011, 022, 029…)</a></li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

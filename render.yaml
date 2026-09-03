@@ -1,0 +1,54 @@
+# ============================================================
+#  render.yaml — Blueprint para Sistema Granados en Render.com
+# ============================================================
+# Render lee este archivo para crear el Web Service + Postgres.
+# Docs: https://docs.render.com/blueprint-spec
+
+databases:
+  - name: sistema-granados-db
+    plan: free          # cambiar a "starter" o "standard" en produccion real
+    databaseName: sistema_granados
+    user: granados
+
+services:
+  - type: web
+    name: sistema-granados
+    runtime: docker
+    plan: free          # cambiar a "starter" para evitar cold starts
+    dockerfilePath: ./sistema-granados/Dockerfile
+    dockerContext: ./sistema-granados
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: sistema-granados-db
+          property: connectionURI
+        # Render genera una URI tipo postgres://user:pass@host/db
+        # Spring necesita jdbc:postgresql://... — ver nota abajo.
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: sistema-granados-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: sistema-granados-db
+          property: password
+      - key: SPRING_DATASOURCE_HOST
+        fromDatabase:
+          name: sistema-granados-db
+          property: host
+      - key: SPRING_DATASOURCE_PORT
+        fromDatabase:
+          name: sistema-granados-db
+          property: port
+      - key: SPRING_DATASOURCE_DBNAME
+        fromDatabase:
+          name: sistema-granados-db
+          property: database
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+      - key: TZ
+        value: America/Guatemala

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout('Inicio', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <!--
+      Mesa de mando: el paisaje 3D es el protagonista.
+      Iconos SVG distintos por modulo (jade/pino), sin marco de iconos.
+    -->
+    <section class="mesa-mando">
+
+        <header class="mesa-saludo">
+            <p class="ceja">Municipalidad de Granados · Baja Verapaz</p>
+            <h1>
+                <span id="saludoMomento">Hola</span>,
+                <span class="texto-dorado" th:text="${nombreMostrar}">usuario</span>
+            </h1>
+            <p class="mesa-fecha" id="fechaHoy"></p>
+        </header>
+
+        <div class="mesa-cinta"
+             th:if="${pctEjecucion != null or vigentePresupuesto != null
+                      or ultimoMesCompras != null or totalPagosHistorial != null}">
+            <div class="cinta-dato" th:if="${pctEjecucion != null}">
+                <span class="etiqueta">Ejecución</span>
+                <span class="valor numeros"
+                      th:text="${#numbers.formatDecimal(pctEjecucion, 1, 1)} + '%'">0%</span>
+            </div>
+            <div class="cinta-dato" th:if="${vigentePresupuesto != null}">
+                <span class="etiqueta">Vigente</span>
+                <span class="valor numeros"
+                      th:text="'Q ' + ${#numbers.formatDecimal(vigentePresupuesto, 1, 'COMMA', 2, 'POINT')}">Q 0</span>
+            </div>
+            <div class="cinta-dato" th:if="${ultimoMesCompras != null}">
+                <span class="etiqueta">Compras</span>
+                <span class="valor" th:text="${ultimoMesCompras}">mes</span>
+                <span class="insignia"
+                      th:if="${ultimoEstadoCompras != null}"
+                      th:classappend="${ultimoEstadoCompras == 'GUARDADO'} ? 'insignia-jade' : 'insignia-ambar'"
+                      th:text="${ultimoEstadoCompras}">ESTADO</span>
+            </div>
+            <div class="cinta-dato" th:if="${totalPagosHistorial != null}">
+                <span class="etiqueta">Pagos en historial</span>
+                <span class="valor numeros" th:text="${totalPagosHistorial}">0</span>
+            </div>
+        </div>
+
+        <nav class="mesa-modulos" aria-label="Módulos">
+            <a sec:authorize="hasAnyRole('COMPRAS','ADMIN_DAFIM','SUPERADMIN')"
+               class="modulo-fila" th:href="@{/dafim/compras}">
+                <span class="modulo-icono modulo-icono-compras" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <rect x="9" y="8" width="22" height="26" rx="3.5" fill="#1a1610" stroke="#c4a35a" stroke-width="1.4"/>
+                        <rect x="14.5" y="5" width="11" height="6.5" rx="1.8" fill="#c4a35a"/>
+                        <rect x="16.5" y="6.4" width="7" height="2.2" rx="1" fill="#1a1610" opacity=".45"/>
+                        <path d="M15 20.5h10M15 25h7" stroke="#8a7a52" stroke-width="1.4" stroke-linecap="round"/>
+                        <path d="M14.5 31.5l3.2 3.1 7.2-7.4" stroke="#f0d78a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <div class="modulo-cuerpo">
+                    <h2>Compras directas</h2>
+                    <p>Procesa el mes y arma el Excel del Art. 10.11.</p>
+                </div>
+                <span class="modulo-ir">Entrar <i class="bi bi-arrow-right"></i></span>
+            </a>
+
+            <a sec:authorize="hasAnyRole('PAQUETES','ADMIN_DAFIM','SUPERADMIN')"
+               class="modulo-fila" th:href="@{/dafim/paquetes}">
+                <span class="modulo-icono modulo-icono-paquetes" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <rect x="7" y="14" width="20" height="16" rx="2.5" fill="#16140f" stroke="#8a7340" stroke-width="1.2" transform="rotate(-8 17 22)"/>
+                        <rect x="10" y="12" width="21" height="16.5" rx="2.5" fill="#1c1912" stroke="#b08d4a" stroke-width="1.25"/>
+                        <rect x="13" y="10" width="20" height="17" rx="2.5" fill="#241e14" stroke="#c4a35a" stroke-width="1.4"/>
+                        <path d="M17 16.5h12M17 20.5h9" stroke="#f0d78a" stroke-width="1.35" stroke-linecap="round"/>
+                        <circle cx="29.5" cy="24.5" r="3.2" fill="#c4a35a"/>
+                    </svg>
+                </span>
+                <div class="modulo-cuerpo">
+                    <h2>Paquetes de facturas</h2>
+                    <p>Ordena las FEL del mes e imprímelas en orden.</p>
+                </div>
+                <span class="modulo-ir">Entrar <i class="bi bi-arrow-right"></i></span>
+            </a>
+
+            <a sec:authorize="hasAnyRole('PRESUPUESTO','ADMIN_DAFIM','SUPERADMIN')"
+               class="modulo-fila" th:href="@{/dafim/presupuesto}">
+                <span class="modulo-icono modulo-icono-presupuesto" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <rect x="6.5" y="9" width="27" height="22" rx="3" fill="#14120e" stroke="#c4a35a" stroke-width="1.4"/>
+                        <path d="M6.5 14.5h27" stroke="#c4a35a" stroke-width="1.1" opacity=".7"/>
+                        <rect x="11" y="24" width="3.4" height="7" rx=".6" fill="#8a7340"/>
+                        <rect x="16.2" y="20" width="3.4" height="11" rx=".6" fill="#c4a35a"/>
+                        <rect x="21.4" y="17.2" width="3.4" height="13.8" rx=".6" fill="#f0d78a"/>
+                        <circle cx="29.2" cy="21.2" r="5.1" fill="#1a1610" stroke="#f0d78a" stroke-width="1.35"/>
+                        <path d="M29.2 18.4v5.6M27.4 20.2h3.6" stroke="#f0d78a" stroke-width="1.15" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div class="modulo-cuerpo">
+                    <h2>Presupuesto</h2>
+                    <p>Ejecución SICOIN, boletín de caja, fuentes y si alcanza para pagar.</p>
+                </div>
+                <span class="modulo-ir">Entrar <i class="bi bi-arrow-right"></i></span>
+            </a>
+
+            <a sec:authorize="hasAnyRole('REMUNERACIONES','ADMIN_DAFIM','SUPERADMIN')"
+               class="modulo-fila" th:href="@{/dafim/remuneraciones/procesar}">
+                <span class="modulo-icono modulo-icono-remuneraciones" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <rect x="8" y="7.5" width="18.5" height="25" rx="2.5" fill="#17140f" stroke="#c4a35a" stroke-width="1.35"/>
+                        <path d="M12 13.5h10.5M12 18h8M12 22.5h6.5" stroke="#8a7a52" stroke-width="1.3" stroke-linecap="round"/>
+                        <circle cx="27.5" cy="24" r="7.2" fill="#1c1810" stroke="#f0d78a" stroke-width="1.4"/>
+                        <circle cx="27.5" cy="21.6" r="2.1" fill="#c4a35a"/>
+                        <path d="M23.8 28.4c.7-2.2 2-3.3 3.7-3.3s3 .1 3.7 3.3" stroke="#c4a35a" stroke-width="1.3" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div class="modulo-cuerpo">
+                    <h2>Remuneraciones</h2>
+                    <p>Oficio mensual de sueldos 011, 029 y 035 (Art. 10.4).</p>
+                </div>
+                <span class="modulo-ir">Entrar <i class="bi bi-arrow-right"></i></span>
+            </a>
+
+            <a sec:authorize="hasAnyRole('ADMIN_RRHH','RRHH','SUPERADMIN')"
+               class="modulo-fila" th:href="@{/rrhh}">
+                <span class="modulo-icono modulo-icono-rrhh" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <circle cx="15" cy="14.5" r="4.2" fill="#c4a35a"/>
+                        <path d="M8.2 28.5c.6-5 3.2-7.6 6.8-7.6s6.2 2.6 6.8 7.6" fill="#1a1610" stroke="#c4a35a" stroke-width="1.3" stroke-linecap="round"/>
+                        <circle cx="26.5" cy="16.2" r="3.5" fill="#f0d78a"/>
+                        <path d="M21.4 29.2c.5-4.2 2.6-6.4 5.1-6.4 2.6 0 4.7 2.2 5.2 6.4" fill="#221c12" stroke="#f0d78a" stroke-width="1.25" stroke-linecap="round"/>
+                        <path d="M18.2 12.2c1.4-2.6 4.2-2.4 5.1-.2" stroke="#e5604f" stroke-width="1.4" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div class="modulo-cuerpo">
+                    <h2>Recursos Humanos</h2>
+                    <p>Personal, permisos y constancias.</p>
+                </div>
+                <span class="modulo-ir">Entrar <i class="bi bi-arrow-right"></i></span>
+            </a>
+
+            <a class="modulo-fila" th:href="@{/normativa}">
+                <span class="modulo-icono modulo-icono-normativa" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <path d="M8 11.5c0-.8.6-1.5 1.5-1.5H19v20.5H9.6c-.9 0-1.6-.7-1.6-1.6V11.5z" fill="#1a1610" stroke="#c4a35a" stroke-width="1.3"/>
+                        <path d="M32 11.5c0-.8-.6-1.5-1.5-1.5H21v20.5h9.4c.9 0 1.6-.7 1.6-1.6V11.5z" fill="#241e14" stroke="#f0d78a" stroke-width="1.3"/>
+                        <path d="M20 10v20.5" stroke="#c4a35a" stroke-width="1.2"/>
+                        <path d="M14 16h3.2M14 20h3.2M23 16h3.2M23 20h3.2" stroke="#8a7a52" stroke-width="1.15" stroke-linecap="round"/>
+                        <circle cx="20" cy="8.2" r="2.1" fill="#c4a35a"/>
+                    </svg>
+                </span>
+                <div class="modulo-cuerpo">
+                    <h2>Normativa</h2>
+                    <p>LAIP, código municipal y leyes que sostienen el sistema.</p>
+                </div>
+                <span class="modulo-ir">Entrar <i class="bi bi-arrow-right"></i></span>
+            </a>
+
+            <a sec:authorize="hasRole('SUPERADMIN')"
+               class="modulo-fila" th:href="@{/admin/usuarios}">
+                <span class="modulo-icono modulo-icono-admin" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <path d="M20 6.5l11 4.2v8.6c0 7.2-4.6 12.4-11 14.2-6.4-1.8-11-7-11-14.2V10.7L20 6.5z" fill="#16130e" stroke="#c4a35a" stroke-width="1.45"/>
+                        <circle cx="20" cy="18.2" r="3.4" stroke="#f0d78a" stroke-width="1.4"/>
+                        <path d="M20 21.6v5.4" stroke="#f0d78a" stroke-width="1.4" stroke-linecap="round"/>
+                        <circle cx="20" cy="18.2" r="1.15" fill="#c4a35a"/>
+                    </svg>
+                </span>
+                <div class="modulo-cuerpo">
+                    <h2>Usuarios del sistema</h2>
+                    <p>Cuentas, roles y accesos.</p>
+                </div>
+                <span class="modulo-ir">Entrar <i class="bi bi-arrow-right"></i></span>
+            </a>
+        </nav>
+
+    </section>
+
+</div>
+</body>
+</html>

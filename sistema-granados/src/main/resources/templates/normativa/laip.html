@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('LAIP', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{normativa/_nav :: cascaron}"></div>
+
+    <div class="folio">
+        <div class="ceja">Normativa · Acceso a la informacion</div>
+        <h1>LAIP</h1>
+        <div class="detalle">
+            Ley de Acceso a la Informacion Publica. Solo esta seccion trata la LAIP.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <p class="norma-meta">Decreto 57-2008 · Congreso de la Republica de Guatemala</p>
+        <div class="texto-legal">
+            <p>
+                Esta municipalidad es <strong>sujeto obligado</strong>. Debe publicar
+                informacion de oficio y atender solicitudes de cualquier persona,
+                sin exigir interes legitimo.
+            </p>
+            <blockquote class="norma-cita">
+                El Excel mensual de compras directas se titula «Informacion de oficio,
+                articulo 10, numeral 11». Eso es este decreto, no otra ley.
+            </blockquote>
+
+            <h3>Para que existe</h3>
+            <p>
+                Garantizar el derecho a saber que hace el Estado con fondos publicos
+                y con decisiones administrativas. La unidad de informacion municipal
+                es el canal formal; DAFIM produce el informe de compras que esa
+                unidad publica.
+            </p>
+
+            <h3>Articulo 10 · Informacion publica de oficio</h3>
+            <p>
+                El sujeto obligado mantiene actualizada, disponible y comprensible,
+                entre otra, esta informacion (resumen operativo, no el articulo completo):
+            </p>
+            <ul>
+                <li>Marco normativo, estructura organica y funciones de cada unidad.</li>
+                <li>Directorio de servidores publicos y remuneraciones.</li>
+                <li>Presupuesto asignado, su ejecucion y las auditorias.</li>
+                <li><strong>Numeral 11.</strong> Contratos de obras, bienes y servicios:
+                    montos, plazos y proveedores. El modulo
+                    <a th:href="@{/dafim/compras}">Compras directas</a> arma ese informe
+                    cada mes.</li>
+                <li>Programas, subsidios, tramites y servicios que ofrece la municipalidad.</li>
+            </ul>
+
+            <h3>Solicitudes (no de oficio)</h3>
+            <p>
+                Quien pida informacion que no este publicada tiene derecho a respuesta
+                en los plazos de la ley. La denegatoria debe fundarse en una excepcion
+                expresa (datos sensibles, secretos de Estado, etc.). El silencio no
+                es respuesta.
+            </p>
+
+            <h3>Como se usa en este sistema</h3>
+            <ul>
+                <li>Procesar el mes genera el Excel legal con el membrete del Art. 10 Num. 11.</li>
+                <li>El historial de pagos y el resumen de la BD alimentan esa publicacion.</li>
+                <li>Los paquetes de facturas FEL ordenan el expediente de respaldo.</li>
+            </ul>
+            <p>
+                Esta pantalla no reproduce el decreto entero. Para el texto autentico:
+                Diario de Centro America y el portal de la PDH / IAIP.
+            </p>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

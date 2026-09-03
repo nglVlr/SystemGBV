@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<!--
+  Cascaron del modulo presupuesto: 3 pestanias padre + subpestanias.
+  Se activa segun ${uri} (GlobalModelAdvice). En detalles de renglon/fuente
+  pinta un hilo corto para no tener que volver al hub.
+-->
+<div th:fragment="cascaron" class="cascaron-presupuesto no-imprimir"
+     th:with="u=${uri},
+              enResumen=${u == '/dafim/presupuesto' or u == '/dafim/presupuesto/'},
+              enRenglones=${#strings.startsWith(u, '/dafim/presupuesto/renglones')},
+              enFuentes=${#strings.startsWith(u, '/dafim/presupuesto/fuentes')},
+              enMes=${#strings.startsWith(u, '/dafim/presupuesto/disponibilidad')},
+              enDonde=${#strings.startsWith(u, '/dafim/presupuesto/donde-pagar')},
+              enApartados=${#strings.startsWith(u, '/dafim/presupuesto/apartados') or #strings.startsWith(u, '/dafim/presupuesto/apartar')},
+              enTrans=${#strings.startsWith(u, '/dafim/presupuesto/transferencias')},
+              enSubir=${#strings.startsWith(u, '/dafim/presupuesto/cargar')},
+              enHistorial=${#strings.startsWith(u, '/dafim/presupuesto/cargas')},
+              enVer=${u == '/dafim/presupuesto' or u == '/dafim/presupuesto/' or #strings.startsWith(u, '/dafim/presupuesto/renglones') or #strings.startsWith(u, '/dafim/presupuesto/fuentes') or #strings.startsWith(u, '/dafim/presupuesto/disponibilidad')},
+              enPagar=${#strings.startsWith(u, '/dafim/presupuesto/donde-pagar') or #strings.startsWith(u, '/dafim/presupuesto/transferencias') or #strings.startsWith(u, '/dafim/presupuesto/apartados') or #strings.startsWith(u, '/dafim/presupuesto/apartar')},
+              enCargas=${#strings.startsWith(u, '/dafim/presupuesto/cargar') or #strings.startsWith(u, '/dafim/presupuesto/cargas')},
+              detalleRenglon=${#strings.startsWith(u, '/dafim/presupuesto/renglones/')},
+              detalleFuente=${#strings.startsWith(u, '/dafim/presupuesto/fuentes/') and !#strings.startsWith(u, '/dafim/presupuesto/fuentes/ir')}">
+
+    <nav class="pestanias-mod" aria-label="Secciones de presupuesto">
+        <a th:href="@{/dafim/presupuesto}"
+           class="pestania"
+           th:classappend="${enVer} ? 'activa'">
+            <i class="bi bi-eye"></i> Ver
+        </a>
+        <a th:href="@{/dafim/presupuesto/donde-pagar}"
+           class="pestania"
+           th:classappend="${enPagar} ? 'activa'">
+            <i class="bi bi-search-heart"></i> Pagar
+        </a>
+        <a th:href="@{/dafim/presupuesto/cargar}"
+           class="pestania"
+           th:classappend="${enCargas} ? 'activa'">
+            <i class="bi bi-file-earmark-pdf"></i> Cargas
+        </a>
+    </nav>
+
+    <nav class="pestanias-sub" aria-label="Dentro de Ver" th:if="${enVer}">
+        <a th:href="@{/dafim/presupuesto}"
+           th:classappend="${enResumen} ? 'activa'">Resumen</a>
+        <a th:href="@{/dafim/presupuesto/renglones}"
+           th:classappend="${enRenglones} ? 'activa'">Renglones</a>
+        <a th:href="@{/dafim/presupuesto/fuentes}"
+           th:classappend="${enFuentes} ? 'activa'">Fuentes</a>
+        <a th:href="@{/dafim/presupuesto/disponibilidad}"
+           th:classappend="${enMes} ? 'activa'">Este mes</a>
+    </nav>
+
+    <nav class="pestanias-sub" aria-label="Dentro de Pagar" th:if="${enPagar}">
+        <a th:href="@{/dafim/presupuesto/donde-pagar}"
+           th:classappend="${enDonde} ? 'activa'">¿Con que pago?</a>
+        <a th:href="@{/dafim/presupuesto/apartados}"
+           th:classappend="${enApartados} ? 'activa'">Apartados</a>
+        <a th:href="@{/dafim/presupuesto/transferencias}"
+           th:classappend="${enTrans} ? 'activa'">Transferencias</a>
+    </nav>
+
+    <nav class="pestanias-sub" aria-label="Dentro de Cargas" th:if="${enCargas}">
+        <a th:href="@{/dafim/presupuesto/cargar}"
+           th:classappend="${enSubir} ? 'activa'">Subir PDFs</a>
+        <a th:href="@{/dafim/presupuesto/cargas}"
+           th:classappend="${enHistorial} ? 'activa'">Historial</a>
+    </nav>
+
+    <nav class="hilo" aria-label="Ubicacion" th:if="${detalleRenglon}">
+        <a th:href="${#strings.isEmpty(q)} ? @{/dafim/presupuesto/renglones} : @{/dafim/presupuesto/renglones(q=${q})}">Renglones</a>
+        <span class="hilo-sep" aria-hidden="true">/</span>
+        <span th:text="${codigo}">000</span>
+    </nav>
+    <nav class="hilo" aria-label="Ubicacion" th:if="${detalleFuente}">
+        <a th:href="${#strings.isEmpty(q)} ? @{/dafim/presupuesto/fuentes} : @{/dafim/presupuesto/fuentes(q=${q})}">Fuentes</a>
+        <span class="hilo-sep" aria-hidden="true">/</span>
+        <span th:text="${codigo}">00-0000-0000</span>
+    </nav>
+
+    <details class="panel-desplegable mt-8">
+        <summary>
+            Leyenda
+            <i class="bi bi-chevron-right chevron"></i>
+        </summary>
+        <div class="panel-cuerpo">
+            <dl class="leyenda-cifras sin-margen">
+                <div><dt>Vigente</dt><dd>presupuesto actual</dd></div>
+                <div><dt>Devengado</dt><dd>ya ejecutado en SICOIN</dd></div>
+                <div><dt>Pagado</dt><dd>ya pagado en SICOIN</dd></div>
+                <div><dt>Saldo</dt><dd>lo que aun se puede gastar</dd></div>
+                <div><dt>Apartado</dt><dd>reservado para un pago</dd></div>
+            </dl>
+        </div>
+    </details>
+    <script th:src="@{/js/filtros-presupuesto.js(v=20260819c)}" defer></script>
+</div>
+
+</body>
+</html>

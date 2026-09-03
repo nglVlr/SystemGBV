@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Normativa', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{normativa/_nav :: cascaron}"></div>
+
+    <div class="folio">
+        <div class="ceja">Marco legal · Granados, Baja Verapaz</div>
+        <h1>Normativa del sistema</h1>
+        <div class="detalle">
+            Leyes de Guatemala que sostienen DAFIM, compras, presupuesto y RRHH.
+            Textos en letra chica, resumidos para consulta diaria. No sustituyen
+            el Diario Oficial.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="aviso aviso-ambar" role="note">
+        <i class="bi bi-info-circle"></i>
+        <p class="norma-aviso">
+            La <strong>LAIP</strong> de este municipio es el Decreto 57-2008 de
+            Guatemala. No se aplica la LAIP de El Salvador (Decreto 534). Cada
+            ley vive en su propia pantalla: no se mezclan articulos.
+        </p>
+    </div>
+
+    <nav class="mesa-modulos norma-lista" aria-label="Leyes">
+        <a class="modulo-fila" th:href="@{/normativa/laip}">
+            <span class="modulo-indice">01</span>
+            <span class="modulo-cuerpo">
+                <h2>LAIP</h2>
+                <p>Decreto 57-2008. Acceso a la informacion publica. Art. 10 numeral 11: compras de oficio.</p>
+            </span>
+            <span class="modulo-ir">Abrir <i class="bi bi-arrow-right"></i></span>
+        </a>
+        <a class="modulo-fila" th:href="@{/normativa/codigo-municipal}">
+            <span class="modulo-indice">02</span>
+            <span class="modulo-cuerpo">
+                <h2>Codigo Municipal</h2>
+                <p>Decreto 12-2002. Autonomia, concejo, alcalde y hacienda municipal (DAFIM).</p>
+            </span>
+            <span class="modulo-ir">Abrir <i class="bi bi-arrow-right"></i></span>
+        </a>
+        <a class="modulo-fila" th:href="@{/normativa/contrataciones}">
+            <span class="modulo-indice">03</span>
+            <span class="modulo-cuerpo">
+                <h2>Ley de Contrataciones del Estado</h2>
+                <p>Decreto 57-92. Compras directas, Guatecompras y renglón 029.</p>
+            </span>
+            <span class="modulo-ir">Abrir <i class="bi bi-arrow-right"></i></span>
+        </a>
+        <a class="modulo-fila" th:href="@{/normativa/presupuesto}">
+            <span class="modulo-indice">04</span>
+            <span class="modulo-cuerpo">
+                <h2>Ley Organica del Presupuesto</h2>
+                <p>Decreto 101-97. Vigente, devengado, pagado y SICOIN.</p>
+            </span>
+            <span class="modulo-ir">Abrir <i class="bi bi-arrow-right"></i></span>
+        </a>
+        <a class="modulo-fila" th:href="@{/normativa/trabajo}">
+            <span class="modulo-indice">05</span>
+            <span class="modulo-cuerpo">
+                <h2>Codigo de Trabajo</h2>
+                <p>Decreto 1441. Jornada, vacaciones, IGSS y permisos (modulo RRHH).</p>
+            </span>
+            <span class="modulo-ir">Abrir <i class="bi bi-arrow-right"></i></span>
+        </a>
+        <a class="modulo-fila" th:href="@{/normativa/probidad}">
+            <span class="modulo-indice">06</span>
+            <span class="modulo-cuerpo">
+                <h2>Ley de Probidad</h2>
+                <p>Decreto 89-2002. Responsabilidad de funcionarios y conflicto de interes.</p>
+            </span>
+            <span class="modulo-ir">Abrir <i class="bi bi-arrow-right"></i></span>
+        </a>
+    </nav>
+
+</div>
+</body>
+</html>

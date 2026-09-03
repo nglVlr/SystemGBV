@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Compras directas', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Modulo de compras</div>
+        <h1>Compras directas</h1>
+        <div class="detalle">
+            Informe mensual · Art. 10 Num. 11 LAIP.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <!-- ============================ Estadisticas =========================== -->
+    <div class="rejilla rejilla-4 mb-22">
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Contratos 029</div>
+            <div class="valor numeros" th:text="${stats.totalContratos}">0</div>
+            <div class="nota">personas por contrato en la BD</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Proveedores</div>
+            <div class="valor numeros" th:text="${stats.totalProveedores}">0</div>
+            <div class="nota">de bienes y servicios</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Pagos en historial</div>
+            <div class="valor numeros" th:text="${stats.totalHistorial}">0</div>
+            <div class="nota">filas guardadas de todos los meses</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Publicaciones NPG</div>
+            <div class="valor numeros" th:text="${stats.totalPublicaciones}">0</div>
+            <div class="nota"><a th:href="@{/dafim/bitacora(tipo='PUBLICACIONES')}">ver catalogo</a></div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Ultimo proceso</div>
+            <div class="valor stat-17"
+                 th:text="${stats.ultimoMes != null and stats.ultimoMesNombre != null} ? ${stats.ultimoMesNombre} : 'Ninguno'">Ninguno</div>
+            <div class="nota" th:if="${stats.ultimoMes != null}">
+                <span class="insignia"
+                      th:classappend="${stats.ultimoEstado == 'GUARDADO'} ? 'insignia-jade' : 'insignia-ambar'"
+                      th:text="${stats.ultimoEstado}">ESTADO</span>
+                <span th:text="' · ' + ${stats.ultimoTotalFilas} + ' filas'"></span>
+            </div>
+            <div class="nota" th:if="${stats.ultimoMes == null}">
+                aun no se procesa ningun mes
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================== Acciones ============================= -->
+    <h2 class="titulo-ops">Operaciones</h2>
+    <div class="rejilla rejilla-3">
+        <a class="tarjeta-accion" th:href="@{/dafim/compras/procesar}">
+            <div class="icono"><i class="bi bi-gear"></i></div>
+            <h3>Procesar el mes</h3>
+            <p>Sube cheques, TXT de Guatecompras y PDF de SICOIN. El sistema arma
+               el informe, lo valida y genera el Excel.</p>
+        </a>
+        <a class="tarjeta-accion" th:href="@{/dafim/compras/cargar-npgs}">
+            <div class="icono"><i class="bi bi-key"></i></div>
+            <h3>Cargar NPGs</h3>
+            <p>PDFs de confirmacion, TXT de todas las publicaciones, o alta manual.</p>
+        </a>
+        <a class="tarjeta-accion" th:href="@{/dafim/compras/cargar-machote}">
+            <div class="icono"><i class="bi bi-box-seam"></i></div>
+            <h3>Cargar machote</h3>
+            <p>Excel de un mes ya trabajado a mano para sumarlo al historial y a
+               la base de datos.</p>
+        </a>
+        <a class="tarjeta-accion" th:href="@{/dafim/compras/resumen}">
+            <div class="icono"><i class="bi bi-bar-chart"></i></div>
+            <h3>Resumen de la BD</h3>
+            <p>Totales por mes, montos acumulados y los proveedores con mas
+               pagos.</p>
+        </a>
+        <a class="tarjeta-accion" th:href="@{/dafim/bitacora(tipo='PUBLICACIONES')}">
+            <div class="icono"><i class="bi bi-journal-text"></i></div>
+            <h3>Catalogo NPG</h3>
+            <p>Todas las publicaciones de Guatecompras guardadas, aunque no tengan cheque.</p>
+        </a>
+        <a class="tarjeta-accion" th:href="@{/dafim/compras/exportar-bd}">
+            <div class="icono"><i class="bi bi-download"></i></div>
+            <h3>Exportar la BD</h3>
+            <p>Descarga un Excel con toda la base: contratos 029, proveedores e
+               historial completo.</p>
+        </a>
+    </div>
+
+</div>
+</body>
+</html>

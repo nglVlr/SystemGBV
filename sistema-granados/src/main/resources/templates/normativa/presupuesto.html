@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Ley de Presupuesto', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{normativa/_nav :: cascaron}"></div>
+
+    <div class="folio">
+        <div class="ceja">Normativa · Hacienda publica</div>
+        <h1>Ley Organica del Presupuesto</h1>
+        <div class="detalle">Vigente, devengado, pagado y el clasificador.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <p class="norma-meta">Decreto 101-97 · Congreso de la Republica de Guatemala</p>
+        <div class="texto-legal">
+            <p>
+                El presupuesto es la autorizacion para gastar, no el dinero en el
+                banco. SICOIN registra la ejecucion. Este sistema lee esos PDFs y
+                muestra si una linea todavia alcanza para pagar.
+            </p>
+
+            <h3>Cifras que usa DAFIM</h3>
+            <ul>
+                <li><strong>Vigente.</strong> Techo actual de la linea (despues de modificaciones).</li>
+                <li><strong>Devengado.</strong> Ya se reconocio la obligacion en SICOIN.</li>
+                <li><strong>Pagado.</strong> Ya salio el desembolso en SICOIN.</li>
+                <li><strong>Saldo.</strong> Lo que aun se puede gastar en esa linea.</li>
+                <li><strong>Apartado.</strong> Reserva interna de este sistema; no es un movimiento SICOIN.</li>
+            </ul>
+            <p>
+                El boletin de caja es dinero real en cuentas monetarias. Se puede
+                apartar presupuesto aunque el boletin no alcance: son dos relojes
+                distintos.
+            </p>
+
+            <h3>Fuentes y renglones</h3>
+            <p>
+                La fuente dice de donde sale el quetzal (ingresos propios, transferencias,
+                prestamos). El renglon dice en que se gasta (011 sueldos, 029 servicios,
+                18 materiales…). Transferencias entre lineas se simulan aqui y se
+                tramitan en SICOIN.
+            </p>
+
+            <h3>En este sistema</h3>
+            <ul>
+                <li><a th:href="@{/dafim/presupuesto}">Resumen y catalogos</a></li>
+                <li><a th:href="@{/dafim/presupuesto/donde-pagar}">¿Con que pago?</a></li>
+                <li><a th:href="@{/dafim/presupuesto/cargar}">Carga de PDFs SICOIN</a></li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

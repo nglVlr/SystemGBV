@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Paquetes de facturas', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Paquetes de facturas</div>
+        <h1>Paquetes SAT</h1>
+        <div class="detalle">
+            Excel del mes + PDFs FEL. El sistema las casa por descripcion y monto, sin repetir.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="buscador-caja">
+        <i class="bi bi-search"></i>
+        <form th:action="@{/dafim/paquetes/buscar}" method="get" class="flex-buscador">
+            <label class="solo-lector" for="dte">Buscar factura por DTE</label>
+            <input type="search" id="dte" name="dte" class="form-control"
+                   placeholder="Buscar una factura por DTE en todos los meses guardados...">
+            <button type="submit" class="btn-jade">Buscar</button>
+        </form>
+    </div>
+
+    <div class="tarjeta">
+        <div class="acciones-fila mb-14">
+            <a th:href="@{/dafim/paquetes/procesar}" class="btn-jade">
+                <i class="bi bi-collection"></i> Procesar un mes
+            </a>
+        </div>
+
+        <h2>Meses procesados</h2>
+        <p class="subtitulo" th:if="${#lists.isEmpty(meses)}">
+            Todavia no hay meses procesados. Empieza con el boton de arriba.
+        </p>
+        <div class="tabla-envoltura" th:if="${!#lists.isEmpty(meses)}">
+            <table class="tabla-datos">
+                <thead>
+                <tr>
+                    <th>Mes</th>
+                    <th>Paquetes</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="m : ${meses}">
+                    <td class="numeros" th:text="${m[1]} + ' / ' + ${m[0]}">7 / 2026</td>
+                    <td class="numeros" th:text="${m[2]}">8</td>
+                    <td>
+                        <a class="btn-neutro"
+                           th:href="@{/dafim/paquetes/{a}/{m}(a=${m[0]},m=${m[1]})}">
+                            Ver paquetes
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

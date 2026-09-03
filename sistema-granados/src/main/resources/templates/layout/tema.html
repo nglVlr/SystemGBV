@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<script th:fragment="antiflash">
+(function () {
+  var t = 'oscuro';
+  try {
+    var g = localStorage.getItem('granados.tema');
+    if (g === 'claro' || g === 'oscuro') t = g;
+  } catch (e) {}
+  document.documentElement.setAttribute('data-tema', t);
+  document.documentElement.setAttribute('data-bs-theme', t === 'claro' ? 'light' : 'dark');
+})();
+</script>
+<button th:fragment="boton" type="button" class="boton-tema" id="botonTema"
+        aria-label="Cambiar a modo claro" title="Modo claro">
+    <i class="bi bi-sun icono-sol" aria-hidden="true"></i>
+    <i class="bi bi-moon icono-luna" aria-hidden="true"></i>
+</button>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(titulo, contenido)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titulo} + ' · Sistema Granados'">Sistema Granados</title>
+    <link rel="icon" type="image/png" th:href="@{/img/logo.png}">
+    <script th:replace="~{layout/tema :: antiflash}"></script>
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css(v=20260902e)}">
+</head>
+<body>
+<a class="saltar-contenido" href="#contenidoPrincipal">Saltar al contenido</a>
+<!-- Fondo 3D cinematografico + grano de pelicula -->
+<canvas id="fondo3d" aria-hidden="true"></canvas>
+<img id="fondo-escudo" th:src="@{/img/logo.png}" alt="" aria-hidden="true">
+<div class="veladura" aria-hidden="true"></div>
+<div class="grano-cine" aria-hidden="true"></div>
+<div class="cursor-raiz" id="cursorRaiz" aria-hidden="true">
+<div class="cursor-seguidor" id="cursorSeguidor"></div>
+<div class="cursor-punto" id="cursorPunto"></div>
+</div>
+<button type="button" class="menu-velo" id="veloMenu" aria-label="Cerrar el menú"></button>
+
+<div class="app-shell">
+
+    <!-- ============================ MENU LATERAL ============================ -->
+    <aside class="menu-lateral" id="menuLateral">
+        <div class="menu-marca">
+            <img class="escudo" th:src="@{/img/logo.png}" alt="Escudo de Granados">
+            <div class="menu-marca-texto">
+                <div class="nombre">Municipalidad de Granados</div>
+                <div class="lema">Baja Verapaz</div>
+            </div>
+        </div>
+
+        <nav class="menu-nav">
+            <div class="menu-seccion">General</div>
+            <a class="menu-item" th:href="@{/}"
+               th:classappend="${uri == '/'} ? 'activo'">
+                <i class="bi bi-grid-1x2"></i><span>Inicio</span>
+            </a>
+
+            <th:block sec:authorize="hasAnyRole('ADMIN_DAFIM','SUPERADMIN','COMPRAS','PAQUETES','PRESUPUESTO','REMUNERACIONES')"
+                      th:with="enCompras=${#strings.startsWith(uri,'/dafim/compras') or #strings.startsWith(uri,'/dafim/paquetes')},
+                               enPres=${#strings.startsWith(uri,'/dafim/presupuesto')}">
+                <div class="menu-seccion">DAFIM</div>
+                <div class="menu-grupo" th:classappend="${enCompras} ? 'abierto'"
+                     sec:authorize="hasAnyRole('COMPRAS','PAQUETES','ADMIN_DAFIM','SUPERADMIN')">
+                    <div class="menu-fila-padre">
+                        <a class="menu-item" th:href="@{/dafim/compras}"
+                           sec:authorize="hasAnyRole('COMPRAS','ADMIN_DAFIM','SUPERADMIN')"
+                           th:classappend="${enCompras} ? 'activo'">
+                            <i class="bi bi-clipboard2-check"></i><span>Compras directas</span>
+                        </a>
+                        <button type="button" class="menu-toggle"
+                                sec:authorize="hasAnyRole('COMPRAS','PAQUETES','ADMIN_DAFIM','SUPERADMIN')"
+                                th:attr="aria-expanded=${enCompras}"
+                                aria-label="Mostrar u ocultar el submenú">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="menu-sub" sec:authorize="hasAnyRole('COMPRAS','PAQUETES','ADMIN_DAFIM','SUPERADMIN')">
+                        <a class="menu-item" th:href="@{/dafim/compras/procesar}"
+                           sec:authorize="hasAnyRole('COMPRAS','ADMIN_DAFIM','SUPERADMIN')"
+                           th:classappend="${#strings.startsWith(uri,'/dafim/compras/procesar')} ? 'activo'">
+                            <i class="bi bi-gear"></i><span>Procesar el mes</span>
+                        </a>
+                        <a class="menu-item" th:href="@{/dafim/paquetes}"
+                           sec:authorize="hasAnyRole('PAQUETES','ADMIN_DAFIM','SUPERADMIN')"
+                           th:classappend="${#strings.startsWith(uri,'/dafim/paquetes')} ? 'activo'">
+                            <i class="bi bi-collection"></i><span>Paquetes</span>
+                        </a>
+                        <a class="menu-item" th:href="@{/dafim/compras/resumen}"
+                           sec:authorize="hasAnyRole('COMPRAS','ADMIN_DAFIM','SUPERADMIN')"
+                           th:classappend="${#strings.startsWith(uri,'/dafim/compras/resumen')} ? 'activo'">
+                            <i class="bi bi-bar-chart"></i><span>Resumen</span>
+                        </a>
+                    </div>
+                </div>
+                <a class="menu-item" th:href="@{/dafim/remuneraciones/procesar}"
+                   sec:authorize="hasAnyRole('REMUNERACIONES','ADMIN_DAFIM','SUPERADMIN')"
+                   th:classappend="${#strings.startsWith(uri,'/dafim/remuneraciones')} ? 'activo'">
+                    <i class="bi bi-people"></i><span>Remuneraciones</span>
+                </a>
+                <div class="menu-grupo" th:classappend="${enPres} ? 'abierto'"
+                     sec:authorize="hasAnyRole('PRESUPUESTO','ADMIN_DAFIM','SUPERADMIN')">
+                    <div class="menu-fila-padre">
+                        <a class="menu-item" th:href="@{/dafim/presupuesto}"
+                           th:classappend="${enPres} ? 'activo'">
+                            <i class="bi bi-bank"></i><span>Presupuesto</span>
+                        </a>
+                        <button type="button" class="menu-toggle"
+                                th:attr="aria-expanded=${enPres}"
+                                aria-label="Mostrar u ocultar el submenú">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="menu-sub">
+                        <a class="menu-item" th:href="@{/dafim/presupuesto/fuentes}"
+                           th:classappend="${#strings.startsWith(uri,'/dafim/presupuesto/fuentes')} ? 'activo'">
+                            <i class="bi bi-layers"></i><span>Fuentes</span>
+                        </a>
+                        <a class="menu-item" th:href="@{/dafim/presupuesto/donde-pagar}"
+                           th:classappend="${#strings.startsWith(uri,'/dafim/presupuesto/donde-pagar')} ? 'activo'">
+                            <i class="bi bi-search-heart"></i><span>¿Con qué pago?</span>
+                        </a>
+                        <a class="menu-item" th:href="@{/dafim/presupuesto/cargar}"
+                           th:classappend="${#strings.startsWith(uri,'/dafim/presupuesto/cargar') or #strings.startsWith(uri,'/dafim/presupuesto/cargas')} ? 'activo'">
+                            <i class="bi bi-cash-coin"></i><span>Caja y cargas</span>
+                        </a>
+                    </div>
+                </div>
+            </th:block>
+
+            <th:block sec:authorize="hasAnyRole('ADMIN_RRHH','RRHH','SUPERADMIN')">
+                <div class="menu-seccion">Recursos Humanos</div>
+                <a class="menu-item" th:href="@{/rrhh}"
+                   th:classappend="${uri == '/rrhh'} ? 'activo'">
+                    <i class="bi bi-house-heart"></i><span>Inicio RRHH</span>
+                </a>
+                <a class="menu-item" th:href="@{/rrhh/permisos}"
+                   th:classappend="${#strings.startsWith(uri,'/rrhh/permisos')} ? 'activo'">
+                    <i class="bi bi-check2-square"></i><span>Permisos</span>
+                </a>
+                <a class="menu-item" th:href="@{/rrhh/empleados}"
+                   th:classappend="${#strings.startsWith(uri,'/rrhh/empleados')} ? 'activo'">
+                    <i class="bi bi-people"></i><span>Personal</span>
+                </a>
+            </th:block>
+
+            <th:block sec:authorize="hasRole('SUPERADMIN')">
+                <div class="menu-seccion">Administración</div>
+                <a class="menu-item" th:href="@{/admin/usuarios}"
+                   th:classappend="${#strings.startsWith(uri,'/admin/usuarios')} ? 'activo'">
+                    <i class="bi bi-person-gear"></i><span>Usuarios</span>
+                </a>
+            </th:block>
+        </nav>
+
+        <div class="menu-fondo">
+            <th:block sec:authorize="hasAnyRole('ADMIN_DAFIM','SUPERADMIN','COMPRAS','PAQUETES','PRESUPUESTO','REMUNERACIONES')">
+                <a class="menu-item menu-bitacora" th:href="@{/dafim/bitacora}"
+                   th:classappend="${#strings.startsWith(uri,'/dafim/bitacora') or #strings.startsWith(uri,'/dafim/compras/buscar')} ? 'activo'">
+                    <i class="bi bi-journal-text"></i><span>Bitácora BD</span>
+                </a>
+            </th:block>
+            <div class="menu-pie">Municipalidad de Granados</div>
+        </div>
+    </aside>
+
+    <!-- =========================== ZONA PRINCIPAL ========================== -->
+    <div class="zona-principal">
+        <header class="barra-superior">
+            <button type="button" id="botonMenu" class="boton-menu"
+                    aria-label="Mostrar u ocultar el menú"
+                    aria-controls="menuLateral" aria-expanded="false">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="barra-titulo" th:text="${titulo}">Página</div>
+            <div class="barra-derecha">
+                <button th:replace="~{layout/tema :: boton}"></button>
+                <nav class="leyes-discreto" aria-label="Normativa">
+                    <a class="leyes-solo-movil" th:href="@{/normativa}">Leyes</a>
+                    <span class="leyes-escritorio">
+                        <a th:href="@{/normativa/laip}">LAIP</a>
+                        <span aria-hidden="true">·</span>
+                        <a th:href="@{/normativa/codigo-municipal}">Cód. mun.</a>
+                        <span aria-hidden="true">·</span>
+                        <a th:href="@{/normativa/contrataciones}">Contrat.</a>
+                        <span aria-hidden="true">·</span>
+                        <a th:href="@{/normativa/presupuesto}">Presup.</a>
+                        <span aria-hidden="true">·</span>
+                        <a th:href="@{/normativa/trabajo}">Trabajo</a>
+                        <span aria-hidden="true">·</span>
+                        <a th:href="@{/normativa/probidad}">Probidad</a>
+                    </span>
+                </nav>
+                <div class="chip-usuario" id="menuUsuario" tabindex="0"
+                     aria-haspopup="true" aria-expanded="false">
+                    <span class="inicial"
+                          th:text="${#strings.toUpperCase(#strings.substring(#authentication.name,0,1))}">U</span>
+                    <span class="chip-nombre" th:text="${#authentication.name}">usuario</span>
+                    <i class="bi bi-chevron-down chip-chevron" aria-hidden="true"></i>
+                    <div class="chip-desplegable">
+                        <form th:action="@{/logout}" method="post" class="sin-margen">
+                            <button type="submit" class="boton-salir">
+                                <i class="bi bi-box-arrow-right"></i> Salir
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="contenido" id="contenidoPrincipal">
+            <div th:if="${exito}" class="aviso aviso-exito" data-auto="1" role="status">
+                <i class="bi bi-check-circle"></i>
+                <div th:text="${exito}">Operación realizada.</div>
+            </div>
+            <div th:if="${error}" class="aviso aviso-error" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <div th:text="${error}">Ocurrió un error.</div>
+                <button type="button" class="cerrar-aviso" aria-label="Cerrar">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+
+            <th:block th:replace="${contenido}"/>
+        </main>
+
+        <footer class="pie">
+            Municipalidad de Granados, Baja Verapaz · Dirección de Administración
+            Financiera Integrada Municipal (DAFIM)
+        </footer>
+    </div>
+</div>
+
+<script th:src="@{/vendor/bootstrap/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/fondo3d.js(v=20260902e)}"></script>
+<script th:src="@{/js/app.js(v=20260902e)}"></script>
+</body>
+</html>

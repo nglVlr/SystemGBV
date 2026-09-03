@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout('Inicio', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">Panel principal</div>
+        <h1>Hola, <span th:text="${nombreMostrar}">usuario</span></h1>
+        <div class="detalle">
+            Elige el modulo con el que vas a trabajar. Solo ves los modulos que
+            corresponden a tu rol.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="rejilla rejilla-3">
+        <a sec:authorize="hasAnyRole('ADMIN_DAFIM','SUPERADMIN')"
+           class="tarjeta-accion" th:href="@{/dafim/compras}">
+            <div class="icono"><i class="bi bi-clipboard2-check"></i></div>
+            <h3>DAFIM · Compras directas</h3>
+            <p>Procesa el mes, genera el Excel del Art. 10.11 y administra la
+               base de contratos y proveedores.</p>
+        </a>
+
+        <a sec:authorize="hasAnyRole('ADMIN_DAFIM','SUPERADMIN')"
+           class="tarjeta-accion" th:href="@{/dafim/paquetes}">
+            <div class="icono"><i class="bi bi-collection"></i></div>
+            <h3>DAFIM · Paquetes de facturas</h3>
+            <p>Ordena las facturas SAT del mes en sus paquetes, sin repetir
+               ninguna, y las imprime en orden.</p>
+        </a>
+
+        <a sec:authorize="hasAnyRole('ADMIN_RRHH','SUPERADMIN')"
+           class="tarjeta-accion" th:href="@{/rrhh}">
+            <div class="icono"><i class="bi bi-people"></i></div>
+            <h3>Recursos Humanos</h3>
+            <p>Personal de la municipalidad, permisos y licencias con
+               aprobacion y constancia imprimible.</p>
+        </a>
+
+        <a sec:authorize="hasRole('SUPERADMIN')"
+           class="tarjeta-accion" th:href="@{/admin/usuarios}">
+            <div class="icono"><i class="bi bi-person-gear"></i></div>
+            <h3>Usuarios del sistema</h3>
+            <p>Crea cuentas, asigna roles, restablece contrasenas y activa o
+               desactiva accesos.</p>
+        </a>
+    </div>
+
+</div>
+</body>
+</html>

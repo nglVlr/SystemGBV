@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Disponibilidad', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>Este mes</h1>
+        <div class="detalle">Semaforo de compra directa: saldo SICOIN menos lo pagado en el sistema este mes.</div>
+        <div class="filete"></div>
+    </div>
+
+    <!-- ========================= SELECTOR DE MES ========================= -->
+    <div class="tarjeta">
+        <form th:action="@{/dafim/presupuesto/disponibilidad}" method="get"
+              class="rejilla rejilla-4" data-filtro>
+            <div class="campo">
+                <label class="form-label" for="fMes">Mes</label>
+                <select class="form-select" id="fMes" name="mes">
+                    <option th:each="m : ${meses}" th:value="${m.key}"
+                            th:selected="${m.key == mes}" th:text="${m.value}"></option>
+                </select>
+            </div>
+            <div class="campo">
+                <label class="form-label" for="fAnio">Anio</label>
+                <select class="form-select" id="fAnio" name="anio">
+                    <option th:each="a : ${anios}" th:value="${a}"
+                            th:selected="${a == anio}" th:text="${a}"></option>
+                </select>
+            </div>
+            <div class="acciones-fila acciones-fin">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-arrow-repeat"></i> Consultar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="aviso aviso-ambar" role="alert">
+        <i class="bi bi-info-circle"></i>
+        <div>
+            El saldo proyectado es <strong>estimado</strong>: saldo SICOIN al corte
+            menos los pagos del sistema en el mes elegido.
+        </div>
+    </div>
+
+    <!-- ============================= TABLA ============================== -->
+    <div class="tarjeta">
+        <h2 th:text="${nombreMes} + ' ' + ${anio}">Mes</h2>
+        <div class="tarjeta vacio-modulo" th:if="${#lists.isEmpty(disponibilidad)}">
+            <i class="bi bi-calendar3" aria-hidden="true"></i>
+            <h2>Nada en este mes</h2>
+            <p class="subtitulo">No hay renglones de compra directa con presupuesto ni con pagos en este mes.</p>
+            <a th:href="@{/dafim/presupuesto/cargar}" class="btn-jade">
+                <i class="bi bi-file-earmark-pdf"></i> Ir a Cargas
+            </a>
+        </div>
+
+        <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(disponibilidad)}">
+            <table class="tabla-datos tabla-zebra tabla-hover">
+                <thead>
+                <tr>
+                    <th class="centrado">Renglon</th>
+                    <th>Descripcion</th>
+                    <th class="monto">Saldo SICOIN Q</th>
+                    <th class="monto">Pagos del mes Q</th>
+                    <th class="monto">Saldo proyectado Q</th>
+                    <th class="centrado">Semaforo</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="d : ${disponibilidad}">
+                    <td class="centrado">
+                        <a class="enlace-codigo" th:href="@{/dafim/presupuesto/renglones/{c}(c=${d.renglon})}">
+                            <strong th:text="${d.renglon}">000</strong>
+                        </a>
+                    </td>
+                    <td class="celda-desc"
+                        th:text="${#strings.isEmpty(d.descripcion)} ? '(sin lineas en la carga activa)' : ${d.descripcion}">descripcion</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(d.saldoDisponible, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(d.pagosMes, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(d.saldoProyectado, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="centrado">
+                        <span class="insignia"
+                              th:classappend="${d.semaforo == 'AGOTADO'} ? 'insignia-rojo' : (${d.semaforo == 'POR_AGOTARSE'} ? 'insignia-ambar' : 'insignia-jade')"
+                              th:text="${d.semaforo == 'POR_AGOTARSE'} ? 'POR AGOTARSE' : ${d.semaforo}">OK</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

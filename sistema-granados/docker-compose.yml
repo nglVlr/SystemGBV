@@ -1,0 +1,52 @@
+# Sistema Granados: aplicacion + PostgreSQL.
+# Arranque completo:  docker compose up -d --build
+# Solo la BD (si corres la app en IntelliJ):  docker compose up -d postgres
+# Parada:    docker compose down
+# Datos:     volumen docker "pgdata" + carpeta ./storage
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: sistema-granados-db
+    restart: unless-stopped
+    ports:
+      # Solo esta PC habla con Postgres. Las demas maquinas entran por el navegador (8085), no a la BD.
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_DB: sistema_granados
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "9508"
+      TZ: America/Guatemala
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sistema_granados"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sistema-granados:1.0.0
+    container_name: sistema-granados-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sistema_granados
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: "9508"
+      APP_STORAGE_UPLOADS: /data/uploads
+      APP_STORAGE_GENERADOS: /data/generados
+      TZ: America/Guatemala
+    volumes:
+      - ./storage/uploads:/data/uploads
+      - ./storage/generados:/data/generados
+
+volumes:
+  pgdata:

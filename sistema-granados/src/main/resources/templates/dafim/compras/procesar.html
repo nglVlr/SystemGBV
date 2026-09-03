@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Procesar el mes', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Compras directas</div>
+        <h1 th:text="${resultado == null} ? 'Procesar el mes' : 'Revisión del mes'">Procesar el mes</h1>
+        <div class="detalle" th:if="${resultado == null}">
+            Tres archivos del mes. El sistema arma el informe, lo valida y
+            genera el Excel. Nada se guarda hasta que confirmes.
+        </div>
+        <div class="detalle" th:unless="${resultado == null}">
+            Revisa filas, acta y alertas. Descarga el Excel o guarda el mes
+            en la base. Nada queda registrado hasta que confirmes.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta" th:if="${resultado == null}">
+        <h2>Archivos del mes</h2>
+        <p class="subtitulo">Cheques del banco, TXT de Guatecompras y PDF de SICOIN.</p>
+
+        <form th:action="@{/dafim/compras/procesar}" method="post"
+              enctype="multipart/form-data"
+              data-procesando="Procesando, esto puede tardar unos segundos...">
+
+            <div class="row g-2 form-mes-anio">
+                <div class="col-7">
+                    <label for="mes" class="form-label">Mes</label>
+                    <select id="mes" name="mes" class="form-select" required>
+                        <option th:each="m : ${meses}" th:value="${m.key}"
+                                th:text="${m.value}">MES</option>
+                    </select>
+                </div>
+                <div class="col-5">
+                    <label for="anio" class="form-label">Año</label>
+                    <input type="number" id="anio" name="anio" class="form-control"
+                           th:value="${anioActual}" min="2020" max="2100" required>
+                </div>
+            </div>
+
+            <div class="rejilla rejilla-2 mt-18">
+                <div class="campo-archivo">
+                    <label for="archivoCheques" class="form-label">
+                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                        Cheques
+                    </label>
+                    <input type="file" class="form-control" id="archivoCheques"
+                           name="archivoCheques" accept=".xls,.xlsx" required
+                           data-nombre="nombreCheques">
+                    <div class="ayuda" id="nombreCheques" data-hint="XLS del banco, estado IMPRESO.">
+                        XLS del banco, estado IMPRESO.
+                    </div>
+                </div>
+
+                <div class="campo-archivo">
+                    <label for="archivoTxt" class="form-label">
+                        <i class="bi bi-file-earmark-text"></i>
+                        Guatecompras
+                    </label>
+                    <input type="file" class="form-control" id="archivoTxt"
+                           name="archivoTxt" accept=".txt" required
+                           data-nombre="nombreTxt">
+                    <div class="ayuda" id="nombreTxt" data-hint="TXT de publicaciones del mes.">
+                        TXT de publicaciones del mes.
+                    </div>
+                </div>
+
+                <div class="campo-archivo">
+                    <label for="archivoPdf" class="form-label">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        SICOIN
+                    </label>
+                    <input type="file" class="form-control" id="archivoPdf"
+                           name="archivoPdf" accept=".pdf" required
+                           data-nombre="nombrePdf">
+                    <div class="ayuda" id="nombrePdf" data-hint="PDF de gastos por proveedor.">
+                        PDF de gastos por proveedor.
+                    </div>
+                </div>
+
+                <div class="campo-archivo">
+                    <label for="archivoRemuneraciones" class="form-label">
+                        <i class="bi bi-file-earmark-ruled"></i>
+                        Remuneraciones
+                        <span class="opcional">(opcional)</span>
+                    </label>
+                    <input type="file" class="form-control" id="archivoRemuneraciones"
+                           name="archivoRemuneraciones" accept=".xls,.xlsx"
+                           data-nombre="nombreRem">
+                    <div class="ayuda" id="nombreRem" data-hint="Planilla 029.">
+                        Planilla 029.
+                    </div>
+                </div>
+            </div>
+
+            <div class="acciones-fila mt-18">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-gear"></i> Procesar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <th:block th:if="${resultado != null}">
+
+        <div th:if="${resultado.mesYaGuardado}" class="aviso aviso-ambar" role="alert">
+            <i class="bi bi-exclamation-circle"></i>
+            <div>
+                <strong th:text="${resultado.mesNombre} + ' ' + ${resultado.anio}">MES</strong>
+                ya esta guardado. Si confirmas, se reemplazan los registros de ese mes.
+            </div>
+        </div>
+
+        <div class="rejilla rejilla-4 mb-16">
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Mes</div>
+                <div class="valor stat-valor-18"
+                     th:text="${resultado.mesNombre} + ' ' + ${resultado.anio}">MES</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Filas</div>
+                <div class="valor numeros" th:text="${#lists.size(resultado.filas)}">0</div>
+                <div class="nota" th:text="${resultado.totalCheques} + ' cheques IMPRESO'"></div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Monto</div>
+                <div class="valor numeros"
+                     th:text="'Q' + ${#numbers.formatDecimal(resultado.totalMonto, 1, 'COMMA', 2, 'POINT')}">Q0.00</div>
+            </div>
+            <div class="tarjeta-stat">
+                <div class="etiqueta">Validación</div>
+                <div class="valor stat-17">
+                    <span th:if="${resultado.validacionOk}"
+                          class="insignia insignia-jade">CUADRA</span>
+                    <span th:unless="${resultado.validacionOk}"
+                          class="insignia insignia-rojo">ERRORES</span>
+                </div>
+            </div>
+        </div>
+
+        <details class="panel-desplegable" th:if="${!#lists.isEmpty(resultado.alertas)}">
+            <summary>
+                <i class="bi bi-flag" style="color:var(--ambar);"></i>
+                Alertas
+                <span class="insignia insignia-ambar"
+                      th:text="${#lists.size(resultado.alertas)}">0</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <p class="subtitulo">Cheques sin cruce, personal 029 nuevo o pagos sin NIT.</p>
+                <div class="acta">
+                    <div class="linea" th:each="l : ${resultado.alertas}"
+                         th:classappend="${#strings.startsWith(l,'\uD83C\uDD95')} ? 'linea-ok'
+                                         : (${#strings.contains(l,'REVISAR') or #strings.startsWith(l,'SIN NIT')} ? 'linea-rev' : 'linea-info')"
+                         th:text="${l}">alerta</div>
+                </div>
+            </div>
+        </details>
+
+        <details class="panel-desplegable" th:if="${!#lists.isEmpty(resultado.reporteValidacion)}">
+            <summary>
+                <i class="bi bi-clipboard-check" style="color:var(--jade);"></i>
+                Acta de validacion
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <div class="acta">
+                    <div class="linea" th:each="l : ${resultado.reporteValidacion}"
+                         th:classappend="${#strings.startsWith(l,'[OK')} ? 'linea-ok'
+                                         : (${#strings.startsWith(l,'[ERR')} ? 'linea-err'
+                                         : (${#strings.startsWith(l,'[REV')} ? 'linea-rev' : 'linea-info'))"
+                         th:text="${l}">linea</div>
+                </div>
+            </div>
+        </details>
+
+        <details class="panel-desplegable" th:if="${!#lists.isEmpty(resultado.obsRemuneraciones)}">
+            <summary>
+                <i class="bi bi-people" style="color:var(--jade);"></i>
+                Cruce remuneraciones
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <div class="acta">
+                    <div class="linea" th:each="l : ${resultado.obsRemuneraciones}"
+                         th:classappend="${#strings.startsWith(l,'[OK')} ? 'linea-ok'
+                                         : (${#strings.startsWith(l,'[REV')} ? 'linea-rev' : 'linea-info')"
+                         th:text="${l}">linea</div>
+                </div>
+            </div>
+        </details>
+
+        <details class="panel-desplegable" th:if="${!#lists.isEmpty(resultado.obsComparacion)}">
+            <summary>
+                <i class="bi bi-arrow-left-right" style="color:var(--jade);"></i>
+                Comparacion mes anterior
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <div class="acta">
+                    <div class="linea" th:each="l : ${resultado.obsComparacion}"
+                         th:classappend="${#strings.contains(l,'[OK]')} ? 'linea-ok' : 'linea-info'"
+                         th:text="${l}">linea</div>
+                </div>
+            </div>
+        </details>
+
+        <details class="panel-desplegable" th:if="${resultado.npgsSinCheque != null and !#lists.isEmpty(resultado.npgsSinCheque)}">
+            <summary>
+                <i class="bi bi-journal-x" style="color:var(--ambar);"></i>
+                Publicados sin cheque
+                <span class="insignia insignia-ambar"
+                      th:text="${#lists.size(resultado.npgsSinCheque)}">0</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <p class="subtitulo">
+                    Publicaciones del TXT de este mes que no se pegaron a ningun cheque.
+                    No entran al Excel legal. Quedan en el catalogo para buscarlas.
+                </p>
+                <div class="tabla-envoltura scroll-alto">
+                    <table class="tabla-datos">
+                        <thead>
+                        <tr>
+                            <th scope="col">NPG</th><th scope="col">Persona</th><th scope="col">NIT</th>
+                            <th scope="col">Descripción</th><th scope="col" class="monto">Monto Q</th><th scope="col">Fecha</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="p : ${resultado.npgsSinCheque}">
+                            <td class="numeros" th:text="${p.npg}">E00</td>
+                            <td class="celda-proveedor" th:text="${p.proveedor}" th:title="${p.proveedor}">nombre</td>
+                            <td class="numeros" th:text="${p.nit}">nit</td>
+                            <td class="celda-desc" th:text="${p.desc}">desc</td>
+                            <td class="monto numeros"
+                                th:text="${#numbers.formatDecimal(p.monto, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                            <td class="numeros" th:text="${p.fecha}">fecha</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </details>
+
+        <div class="tarjeta">
+            <h2>Filas del informe
+                <span class="insignia insignia-pino"
+                      th:text="${#lists.size(resultado.filas)}">0</span>
+            </h2>
+            <p class="subtitulo">Asi queda el Excel: bienes y servicios, al final personal 029.</p>
+            <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(resultado.filas)}">
+                <table class="tabla-datos">
+                    <thead>
+                    <tr>
+                        <th scope="col">No.</th>
+                        <th scope="col">Modalidad</th>
+                        <th scope="col">Descripción</th>
+                        <th scope="col" class="centrado">Reng.</th>
+                        <th scope="col">Proveedor</th>
+                        <th scope="col">NIT</th>
+                        <th scope="col">NPG</th>
+                        <th scope="col" class="monto">Monto Q</th>
+                        <th scope="col">Contrato</th>
+                        <th scope="col">Cheque</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="f, it : ${resultado.filas}">
+                        <td class="numeros" th:text="${it.count}">1</td>
+                        <td>
+                            <span class="insignia"
+                                  th:classappend="${f.modalidad == 'BAJA CUANTIA'} ? 'insignia-jade' : 'insignia-neutra'"
+                                  th:text="${f.modalidad}">MOD</span>
+                        </td>
+                        <td class="celda-desc" th:text="${f.desc}">desc</td>
+                        <td class="centrado">
+                            <span class="insignia"
+                                  th:classappend="${f.renglon == '029'} ? 'insignia-pino' : 'insignia-neutra'"
+                                  th:text="${f.renglon}">029</span>
+                        </td>
+                        <td class="celda-proveedor" th:text="${f.proveedor}" th:title="${f.proveedor}">proveedor</td>
+                        <td class="numeros" th:text="${f.nit}">nit</td>
+                        <td class="numeros" th:text="${f.npg}">npg</td>
+                        <td class="monto numeros"
+                            th:text="${#numbers.formatDecimal(f.precio, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                        <td class="numeros" th:text="${f.contrato}">contrato</td>
+                        <td class="numeros" th:text="${f.cheque}">cheque</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="texto-suave sin-margen" th:if="${#lists.isEmpty(resultado.filas)}">
+                No se genero ninguna fila. Revisa que los tres archivos correspondan al mismo mes.
+            </p>
+        </div>
+
+        <div class="acciones-fila pegajosa">
+            <a th:href="@{/dafim/compras/procesar/excel}" class="btn-jade">
+                <i class="bi bi-file-earmark-excel"></i> Excel
+            </a>
+            <form th:action="@{/dafim/compras/procesar/confirmar}" method="post"
+                  class="sin-margen"
+                  data-procesando="Guardando en la base de datos..."
+                  data-confirmar="Guardar este mes en la base de datos? Se actualizan historial, contratos y proveedores.">
+                <button type="submit" class="btn-contorno">
+                    <i class="bi bi-database-check"></i> Guardar
+                </button>
+            </form>
+            <form th:action="@{/dafim/compras/procesar/descartar}" method="post"
+                  class="sin-margen">
+                <button type="submit" class="btn-neutro">
+                    <i class="bi bi-x-lg"></i> Descartar
+                </button>
+            </form>
+        </div>
+
+    </th:block>
+
+</div>
+</body>
+</html>

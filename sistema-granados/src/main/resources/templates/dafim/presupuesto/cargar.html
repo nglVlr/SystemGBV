@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout('Cargas', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>Subir PDFs</h1>
+        <div class="detalle">
+            Dos archivos, cada uno por su lado: ejecucion de egresos (presupuesto)
+            y boletin de caja (dinero real). Al volver a subir, la nueva queda
+            activa y la anterior pasa a Historial: no se duplican las lineas.
+            Los apartados activos se conservan si esas lineas siguen en el PDF.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="aviso aviso-ambar" role="alert">
+        <i class="bi bi-info-circle"></i>
+        <div>
+            Exporta ambos reportes desde SICOIN GL. Las fuentes ya nombradas
+            no se vuelven a crear.
+        </div>
+    </div>
+
+    <div class="rejilla rejilla-2">
+
+        <!-- ===================== EJECUCION DE EGRESOS ======================== -->
+        <div class="tarjeta">
+            <h2><i class="bi bi-file-earmark-pdf"></i> Ejecucion de egresos</h2>
+            <p class="subtitulo" th:if="${carga != null}">
+                Activa:
+                <strong th:text="(${carga.periodoDesde != null} ? ${#temporals.format(carga.periodoDesde,'dd/MM/yyyy')} : '?') + ' a ' + (${carga.periodoHasta != null} ? ${#temporals.format(carga.periodoHasta,'dd/MM/yyyy')} : '?')">periodo</strong>
+                ·
+                <span th:text="${carga.totalLineas}">0</span> lineas
+            </p>
+            <p class="subtitulo" th:if="${carga == null}">
+                Aun no hay una carga activa de presupuesto.
+            </p>
+            <form th:action="@{/dafim/presupuesto/cargar}" method="post"
+                  enctype="multipart/form-data"
+                  data-procesando="Leyendo el PDF de ejecucion de egresos...">
+
+                <div class="campo-archivo">
+                    <label for="archivo" class="form-label">PDF de ejecucion de egresos</label>
+                    <input type="file" class="form-control" id="archivo"
+                           name="archivo" accept=".pdf" required>
+                    <div class="ayuda">
+                        Reemplaza la carga activa. Los apartados se conservan
+                        si las lineas siguen en el PDF.
+                    </div>
+                </div>
+
+                <div class="acciones-fila mt-18">
+                    <button type="submit" class="btn-jade">
+                        <i class="bi bi-upload"></i> Importar ejecucion
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ======================== BOLETIN DE CAJA ========================== -->
+        <div class="tarjeta">
+            <h2><i class="bi bi-cash-coin"></i> Boletin de caja</h2>
+            <p class="subtitulo" th:if="${cargaCaja != null}">
+                Activa:
+                <strong th:text="${cargaCaja.fechaCorte != null} ? ${#temporals.format(cargaCaja.fechaCorte,'dd/MM/yyyy')} : 'sin fecha'">fecha</strong>
+                ·
+                <span th:text="${cargaCaja.totalCuentas}">0</span> cuentas ·
+                <strong class="numeros"
+                        th:text="'Q ' + ${#numbers.formatDecimal(cargaCaja.totalNuevoSaldo ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</strong>
+            </p>
+            <p class="subtitulo" th:if="${cargaCaja == null}">
+                Aun no hay un boletin de caja activo.
+            </p>
+            <form th:action="@{/dafim/presupuesto/cargar-caja}" method="post"
+                  enctype="multipart/form-data"
+                  data-procesando="Leyendo el PDF del boletin de caja...">
+
+                <div class="campo-archivo">
+                    <label for="archivoCaja" class="form-label">PDF del boletin de caja</label>
+                    <input type="file" class="form-control" id="archivoCaja"
+                           name="archivo" accept=".pdf" required>
+                    <div class="ayuda">
+                        Reemplaza el boletin activo. Independiente del PDF de egresos.
+                    </div>
+                </div>
+
+                <div class="acciones-fila mt-18">
+                    <button type="submit" class="btn-jade">
+                        <i class="bi bi-upload"></i> Importar boletin
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <div class="tarjeta mt-18" th:if="${!#lists.isEmpty(cargasRecientes)}">
+        <h2><i class="bi bi-clock-history"></i> Cargas recientes de presupuesto</h2>
+        <div class="tabla-envoltura">
+            <table class="tabla-datos tabla-zebra tabla-hover">
+                <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Archivo</th>
+                    <th>Periodo</th>
+                    <th>Usuario</th>
+                    <th class="centrado">Lineas</th>
+                    <th class="centrado">Estado</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${cargasRecientes}">
+                    <td class="numeros">
+                        <time th:if="${c.fechaCarga != null}"
+                              th:attr="data-fecha=${#temporals.formatISO(c.fechaCarga)}"
+                              th:text="${#temporals.format(c.fechaCarga,'dd/MM/yyyy HH:mm')}">fecha</time>
+                    </td>
+                    <td th:text="${#strings.abbreviate(c.nombreArchivo, 45)}">archivo</td>
+                    <td class="numeros"
+                        th:text="(${c.periodoDesde != null} ? ${#temporals.format(c.periodoDesde,'dd/MM/yyyy')} : '?') + ' a ' + (${c.periodoHasta != null} ? ${#temporals.format(c.periodoHasta,'dd/MM/yyyy')} : '?')">periodo</td>
+                    <td th:text="${c.usuario}">usuario</td>
+                    <td class="centrado numeros" th:text="${c.totalLineas}">0</td>
+                    <td class="centrado">
+                        <span class="insignia"
+                              th:classappend="${c.estado == 'ACTIVA'} ? 'insignia-jade' : 'insignia-neutra'"
+                              th:text="${c.estado == 'ACTIVA'} ? 'Activa' : 'En historial'">Activa</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tarjeta mt-18" th:if="${!#lists.isEmpty(cargasCajaRecientes)}">
+        <h2><i class="bi bi-clock-history"></i> Cargas recientes de caja</h2>
+        <div class="tabla-envoltura">
+            <table class="tabla-datos tabla-zebra tabla-hover">
+                <thead>
+                <tr>
+                    <th>Fecha carga</th>
+                    <th>Archivo</th>
+                    <th>Corte</th>
+                    <th>Usuario</th>
+                    <th class="centrado">Cuentas</th>
+                    <th class="monto">Total Q</th>
+                    <th class="centrado">Estado</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${cargasCajaRecientes}">
+                    <td class="numeros">
+                        <time th:if="${c.fechaCarga != null}"
+                              th:attr="data-fecha=${#temporals.formatISO(c.fechaCarga)}"
+                              th:text="${#temporals.format(c.fechaCarga,'dd/MM/yyyy HH:mm')}">fecha</time>
+                    </td>
+                    <td th:text="${#strings.abbreviate(c.nombreArchivo, 45)}">archivo</td>
+                    <td class="numeros"
+                        th:text="${c.fechaCorte != null} ? ${#temporals.format(c.fechaCorte,'dd/MM/yyyy')} : '—'">corte</td>
+                    <td th:text="${c.usuario}">usuario</td>
+                    <td class="centrado numeros" th:text="${c.totalCuentas}">0</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(c.totalNuevoSaldo ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="centrado">
+                        <span class="insignia"
+                              th:classappend="${c.estado == 'ACTIVA'} ? 'insignia-jade' : 'insignia-neutra'"
+                              th:text="${c.estado == 'ACTIVA'} ? 'Activa' : 'En historial'">Activa</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Apartados', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>Apartados</h1>
+        <div class="detalle">Reservas de presupuesto y efectivo. Liberar lo devuelve; marcar pagado deja de restarlo.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="rejilla rejilla-3 mb-22">
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Activos (global)</div>
+            <div class="valor" th:text="${resumen.cantidad}">0</div>
+            <div class="nota">todas las reservas vigentes, no el filtro de abajo</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Presupuesto apartado (global)</div>
+            <div class="valor numeros"
+                 th:text="'Q ' + ${#numbers.formatDecimal(resumen.totalPresupuesto, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+            <div class="nota">ya no esta libre en renglones · solo ACTIVO</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Banco apartado (global)</div>
+            <div class="valor numeros"
+                 th:text="'Q ' + ${#numbers.formatDecimal(resumen.totalBanco, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+            <div class="nota">ya no esta libre en el boletin · solo ACTIVO</div>
+        </div>
+    </div>
+
+    <div class="acciones-fila segmentos mb-14">
+        <a th:href="@{/dafim/presupuesto/apartados(estado='ACTIVO', q=${q}, tipo=${tipo}, fuente=${fuente}, desde=${desde}, hasta=${hasta}, grupo=${grupo})}"
+           class="btn-chico"
+           th:classappend="${estado == 'ACTIVO'} ? 'btn-jade' : 'btn-neutro'">Activos</a>
+        <a th:href="@{/dafim/presupuesto/apartados(estado='USADO', q=${q}, tipo=${tipo}, fuente=${fuente}, desde=${desde}, hasta=${hasta}, grupo=${grupo})}"
+           class="btn-chico"
+           th:classappend="${estado == 'USADO'} ? 'btn-jade' : 'btn-neutro'">Pagados</a>
+        <a th:href="@{/dafim/presupuesto/apartados(estado='LIBERADO', q=${q}, tipo=${tipo}, fuente=${fuente}, desde=${desde}, hasta=${hasta}, grupo=${grupo})}"
+           class="btn-chico"
+           th:classappend="${estado == 'LIBERADO'} ? 'btn-jade' : 'btn-neutro'">Liberados</a>
+        <a th:href="@{/dafim/presupuesto/apartados(estado='TODOS', q=${q}, tipo=${tipo}, fuente=${fuente}, desde=${desde}, hasta=${hasta}, grupo=${grupo})}"
+           class="btn-chico"
+           th:classappend="${estado == 'TODOS'} ? 'btn-jade' : 'btn-neutro'">Todos</a>
+    </div>
+    <div data-filtro-ambito data-filtro-umbral="50">
+    <div th:replace="~{dafim/presupuesto/_filtros :: apartados}"></div>
+    <div class="acciones-fila mb-16">
+        <a th:href="@{/dafim/presupuesto/donde-pagar}" class="btn-contorno btn-chico">
+            <i class="bi bi-plus-lg"></i> Nuevo
+        </a>
+    </div>
+
+    <div class="tarjeta vacio-modulo" th:if="${#lists.isEmpty(apartados)}">
+        <i class="bi bi-bookmark" aria-hidden="true"></i>
+        <h2 th:if="${estado == 'ACTIVO'}">No hay apartados activos</h2>
+        <h2 th:unless="${estado == 'ACTIVO'}">0 resultados en este filtro</h2>
+        <p class="subtitulo">
+            <span th:if="${estado == 'ACTIVO'}">Cambia el filtro o busca un gasto en ¿Con que pago?.</span>
+            <span th:unless="${estado == 'ACTIVO'}">Prueba otro estado, texto o Limpiar todo.</span>
+        </p>
+        <a th:href="@{/dafim/presupuesto/donde-pagar}" class="btn-jade">
+            <i class="bi bi-search-heart"></i> ¿Con que pago?
+        </a>
+    </div>
+
+    <p class="contador-filtro" th:if="${!#lists.isEmpty(apartados)}"
+       th:text="${#lists.size(apartados)} + (${#lists.size(apartados) == 1} ? ' apartado' : ' apartados')">0 apartados</p>
+
+    <div class="apilado-grupos" th:if="${!#lists.isEmpty(apartados)}">
+        <details class="grupo-apartados" open th:each="g : ${gruposApartados}" data-filtro-grupo>
+            <summary>
+                <span th:text="${g.key}">grupo</span>
+                <span class="texto-suave"
+                      th:text="' · ' + ${#lists.size(g.value)}"> · 1</span>
+                <i class="bi bi-chevron-right chevron" aria-hidden="true"></i>
+            </summary>
+            <div class="apilado-grupos">
+        <div class="tarjeta tarjeta-apartado" th:each="a : ${g.value}" data-filtro-fila
+             th:attr="data-filtro-texto=|${a.concepto} ${a.renglon} ${a.fuente} ${a.usuario}|">
+            <div class="apartado-cabeza">
+                <div>
+                    <h2 class="h2-apartado">
+                        <span class="insignia"
+                              th:classappend="${a.estado == 'ACTIVO'} ? 'insignia-jade' : (${a.estado == 'USADO'} ? 'insignia-pino' : 'insignia-neutra')"
+                              th:text="${a.estado == 'USADO'} ? 'PAGADO' : ${a.estado}">ACTIVO</span>
+                        <strong th:text="${a.concepto}">concepto</strong>
+                    </h2>
+                    <p class="subtitulo sin-margen">
+                        <time th:if="${a.fecha != null}"
+                              th:attr="data-fecha=${#temporals.formatISO(a.fecha)}"
+                              th:text="${#temporals.format(a.fecha,'dd/MM/yyyy HH:mm')}">fecha</time>
+                        <span th:if="${a.fecha == null}">sin fecha</span>
+                        ·
+                        <span th:text="${a.usuario}">usuario</span>
+                    </p>
+                </div>
+                <div class="acciones-fila sin-margen" th:if="${a.estado == 'ACTIVO'}">
+                    <a th:if="${a.montoBanco <= 0}"
+                       th:href="@{/dafim/presupuesto/apartados/{id}/banco(id=${a.id})}"
+                       class="btn-contorno btn-chico">
+                        <i class="bi bi-cash-coin"></i> Agregar banco
+                    </a>
+                    <form th:action="@{/dafim/presupuesto/apartados/{id}/usar(id=${a.id})}"
+                          method="post" class="sin-margen"
+                          th:attr="data-confirmar=|Marcar pagado «${a.concepto}» Q ${#numbers.formatDecimal(a.montoPresupuesto, 1, 'COMMA', 2, 'POINT')} pres. + ${a.montoBanco <= 0 ? 'sin efectivo' : ('Q ' + #numbers.formatDecimal(a.montoBanco, 1, 'COMMA', 2, 'POINT') + ' banco')}? Dejara de restar del saldo libre (el cheque ya salio o va a salir).|">
+                        <button type="submit" class="btn-jade btn-chico">
+                            <i class="bi bi-check2-circle"></i> Marcar pagado
+                        </button>
+                    </form>
+                    <form th:action="@{/dafim/presupuesto/apartados/{id}/liberar(id=${a.id})}"
+                          method="post" class="sin-margen"
+                          th:attr="data-confirmar=|Liberar «${a.concepto}» Q ${#numbers.formatDecimal(a.montoPresupuesto, 1, 'COMMA', 2, 'POINT')} pres. + ${a.montoBanco <= 0 ? 'sin efectivo' : ('Q ' + #numbers.formatDecimal(a.montoBanco, 1, 'COMMA', 2, 'POINT') + ' banco')}? El dinero vuelve a estar libre.|">
+                        <button type="submit" class="btn-peligro btn-chico">
+                            <i class="bi bi-unlock"></i> Liberar
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="apartado-origen">
+                <div>
+                    <div class="etiqueta">Sale de</div>
+                    <div>
+                        Renglon
+                        <span class="codigo-con-copia">
+                            <a class="enlace-codigo" th:href="@{/dafim/presupuesto/renglones/{c}(c=${a.renglon})}">
+                                <strong th:text="${a.renglon}">000</strong>
+                            </a>
+                            <button type="button" class="btn-copiar"
+                                    th:attr="data-copiar=${a.renglon}"
+                                    aria-label="Copiar codigo de renglon" title="Copiar">
+                                <i class="bi bi-clipboard" aria-hidden="true"></i>
+                            </button>
+                        </span>
+                        <span class="texto-suave" th:text="${a.descripcion}">desc</span>
+                    </div>
+                    <div>
+                        Fuente
+                        <span class="codigo-con-copia">
+                            <a class="enlace-codigo" th:href="@{/dafim/presupuesto/fuentes/{c}(c=${a.fuente})}">
+                                <strong th:text="${a.fuente}">00-0000-0000</strong>
+                            </a>
+                            <button type="button" class="btn-copiar"
+                                    th:attr="data-copiar=${a.fuente}"
+                                    aria-label="Copiar codigo de fuente" title="Copiar">
+                                <i class="bi bi-clipboard" aria-hidden="true"></i>
+                            </button>
+                        </span>
+                    </div>
+                    <div class="texto-suave texto-12-5"
+                         th:if="${!#strings.isEmpty(a.programa)}"
+                         th:text="${a.programa} + (${#strings.isEmpty(a.proyecto) or a.proyecto == '000 SIN PROYECTO'} ? '' : ' · ' + a.proyecto) + (${#strings.isEmpty(a.actividad)} ? (${#strings.isEmpty(a.actividadObra)} ? '' : ' · act. ' + a.actividadObra) : ' · ' + a.actividad)">programa</div>
+                </div>
+                <div class="apartado-montos">
+                    <div>
+                        <div class="etiqueta">Presupuesto</div>
+                        <div class="numeros valor-apartado"
+                             th:text="'Q ' + ${#numbers.formatDecimal(a.montoPresupuesto, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                    </div>
+                    <div>
+                        <div class="etiqueta">Banco</div>
+                        <div th:if="${a.montoBanco <= 0}">
+                            <span class="insignia insignia-neutra">sin efectivo</span>
+                        </div>
+                        <div class="numeros valor-apartado" th:unless="${a.montoBanco <= 0}"
+                             th:text="'Q ' + ${#numbers.formatDecimal(a.montoBanco, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            </div>
+        </details>
+    </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Fuentes de financiamiento', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>Fuentes</h1>
+        <div class="detalle">Saldo presupuestario y dinero real del boletin de caja. El nombre se edita aqui.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="aviso aviso-ambar" role="alert" th:if="${cargaCaja == null}">
+        <i class="bi bi-info-circle"></i>
+        <div>
+            Sin boletin de caja: el dinero real aparece en cero.
+            <a th:href="@{/dafim/presupuesto/cargar}">Subirlo en Cargas</a>
+        </div>
+    </div>
+    <div class="aviso aviso-exito" role="status" th:if="${cargaCaja != null}">
+        <i class="bi bi-check-circle"></i>
+        <div>
+            Boletin al
+            <strong>
+                <time th:if="${cargaCaja.fechaCorte != null}"
+                      th:attr="data-fecha=${#temporals.formatISO(cargaCaja.fechaCorte)}"
+                      th:text="${#temporals.format(cargaCaja.fechaCorte,'dd/MM/yyyy')}">fecha</time>
+            </strong>
+            ·
+            <span th:text="${cargaCaja.totalCuentas}">0</span> cuentas ·
+            <strong class="numeros"
+                    th:text="'Q ' + ${#numbers.formatDecimal(cargaCaja.totalNuevoSaldo ?: 0, 1, 'COMMA', 2, 'POINT')}">Q 0</strong>
+        </div>
+    </div>
+
+    <form th:action="@{/dafim/presupuesto/fuentes/ir}" method="get"
+          class="buscador-caja" data-filtro>
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <label class="solo-lector" for="fIrFuente">Numero de fuente</label>
+        <input type="text" id="fIrFuente" name="q" class="form-control" required
+               placeholder="Numero de fuente: p.ej. 31-0151-0001"
+               aria-label="Numero de fuente">
+        <button type="submit" class="btn-jade">
+            <i class="bi bi-box-arrow-up-right"></i> Ver desglose
+        </button>
+    </form>
+    <p class="texto-chico texto-suave mb-18">
+        Numero completo o una parte.
+    </p>
+
+    <div data-filtro-ambito data-filtro-umbral="50">
+        <div th:replace="~{dafim/presupuesto/_filtros :: fuentes}"></div>
+
+        <div class="tarjeta vacio-modulo" th:if="${#lists.isEmpty(fuentes) and !hayCarga}">
+            <i class="bi bi-bank" aria-hidden="true"></i>
+            <h2>Aun no hay presupuesto cargado</h2>
+            <p class="subtitulo">Sube el PDF de ejecucion de egresos para ver las fuentes.</p>
+            <a th:href="@{/dafim/presupuesto/cargar}" class="btn-jade">
+                <i class="bi bi-file-earmark-pdf"></i> Ir a Cargas
+            </a>
+        </div>
+        <div class="tarjeta vacio-modulo" th:if="${#lists.isEmpty(fuentes) and hayCarga}">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <h2>0 resultados</h2>
+            <p class="subtitulo">Prueba otro codigo, nombre o Limpiar todo.</p>
+            <a th:href="@{/dafim/presupuesto/fuentes}" class="btn-neutro">Limpiar todo</a>
+        </div>
+        <p class="subtitulo" data-filtro-vacio-local hidden>0 resultados en esta tabla.</p>
+
+        <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(fuentes)}">
+            <table class="tabla-datos tabla-zebra tabla-hover">
+                <thead>
+                <tr>
+                    <th>Fuente</th>
+                    <th>Nombre</th>
+                    <th class="monto">Saldo Q</th>
+                    <th class="monto">Dinero real Q</th>
+                    <th class="col-ejecucion">Ejecucion</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="f : ${fuentes}" data-filtro-fila
+                    th:attr="data-filtro-texto=|${f.codigo} ${f.nombre}|,
+                             data-saldo=${f.saldoDisponible > 0 ? '1' : '0'}">
+                    <td class="numeros">
+                        <div class="codigo-con-copia">
+                            <a class="enlace-codigo" th:href="@{/dafim/presupuesto/fuentes/{c}(c=${f.codigo}, q=${q})}">
+                                <strong th:text="${f.codigo}">codigo</strong>
+                            </a>
+                            <button type="button" class="btn-copiar"
+                                    th:attr="data-copiar=${f.codigo}"
+                                    aria-label="Copiar codigo de fuente" title="Copiar">
+                                <i class="bi bi-clipboard" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                        <form th:action="@{/dafim/presupuesto/fuentes/nombre}" method="post"
+                              class="catalogo-nombre sin-margen">
+                            <input type="hidden" name="codigo" th:value="${f.codigo}">
+                            <label class="solo-lector" th:for="'nom-' + ${f.codigo}">Nombre de la fuente</label>
+                            <input type="text" name="nombre" class="form-control"
+                                   th:id="'nom-' + ${f.codigo}"
+                                   th:value="${f.nombre}" placeholder="sin nombre"
+                                   maxlength="160">
+                            <button type="submit" class="btn-neutro btn-chico"
+                                    title="Guardar el nombre de la fuente"
+                                    aria-label="Guardar el nombre de la fuente">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                        </form>
+                    </td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(f.saldoDisponible, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="monto numeros"
+                        th:classappend="${cargaCaja == null} ? 'texto-suave' : (${f.dineroReal > 0} ? 'texto-dorado' : '')">
+                        <span th:if="${cargaCaja == null}">—</span>
+                        <th:block th:if="${cargaCaja != null}">
+                            <div th:if="${f.dineroRealFuncionamiento.signum() > 0 or f.dineroRealInversion.signum() > 0}">
+                                <div class="numeros"
+                                     th:text="${#numbers.formatDecimal(f.dineroRealFuncionamiento, 1, 'COMMA', 2, 'POINT')} + ' func.'">0.00 func.</div>
+                                <div class="numeros"
+                                     th:text="${#numbers.formatDecimal(f.dineroRealInversion, 1, 'COMMA', 2, 'POINT')} + ' inv.'">0.00 inv.</div>
+                            </div>
+                            <span th:unless="${f.dineroRealFuncionamiento.signum() > 0 or f.dineroRealInversion.signum() > 0}"
+                                  th:text="${#numbers.formatDecimal(f.dineroReal, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                        </th:block>
+                    </td>
+                    <td>
+                        <div class="barra-progreso">
+                            <div class="relleno"
+                                 th:classappend="${f.pctEjecucion > 90} ? 'nivel-agotado' : (${f.pctEjecucion >= 70} ? 'nivel-alerta' : 'nivel-ok')"
+                                 th:style="'width:' + (${f.pctEjecucion > 100} ? 100 : ${f.pctEjecucion}) + '%'"></div>
+                        </div>
+                        <div class="progreso-pie" th:text="${f.pctEjecucion} + '%'">0%</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Contrataciones', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{normativa/_nav :: cascaron}"></div>
+
+    <div class="folio">
+        <div class="ceja">Normativa · Compras publicas</div>
+        <h1>Ley de Contrataciones del Estado</h1>
+        <div class="detalle">Compras directas, Guatecompras y contratos 029.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <p class="norma-meta">Decreto 57-92 y reformas · Congreso de la Republica de Guatemala</p>
+        <div class="texto-legal">
+            <p>
+                Toda adquisicion de bienes, servicios y obras con fondos publicos
+                entra por esta ley. La modalidad (compra directa, cotizacion,
+                licitacion) depende del monto y del objeto, no del gusto del operador.
+            </p>
+
+            <h3>Compras directas y baja cuantia</h3>
+            <p>
+                El modulo DAFIM de compras arma el informe mensual de esas
+                contrataciones. Cruza cheques del banco, el TXT de Guatecompras y
+                el PDF de SICOIN. El Excel de salida es el entregable de oficio
+                (eso se explica en <a th:href="@{/normativa/laip}">LAIP</a>, no aqui).
+            </p>
+
+            <h3>Guatecompras</h3>
+            <p>
+                La publicacion electronica es el expediente visible. El NPG
+                (Numero de Publicacion Guatecompras) identifica cada evento. Cargar
+                PDFs de confirmacion llena los NPG del personal 029.
+            </p>
+
+            <h3>Renglon 029</h3>
+            <p>
+                Servicios tecnicos y profesionales. No es plaza 011. El sistema
+                distingue contratos 029 de proveedores de bienes para no mezclar
+                nominas con facturas de ferreteria.
+            </p>
+
+            <h3>En este sistema</h3>
+            <ul>
+                <li><a th:href="@{/dafim/compras/procesar}">Procesar el mes</a> — cruza las tres fuentes.</li>
+                <li><a th:href="@{/dafim/paquetes}">Paquetes FEL</a> — ordena facturas del mes.</li>
+                <li>Machote — mes ya trabajado a mano que se suma al historial.</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

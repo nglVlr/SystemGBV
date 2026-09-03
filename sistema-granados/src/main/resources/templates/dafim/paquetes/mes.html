@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Paquetes del mes', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Paquetes de facturas</div>
+        <h1 th:text="'Paquetes de ' + ${mes} + ' / ' + ${anio}">Paquetes del mes</h1>
+        <div class="detalle">Facturas en el orden del Excel. Imprime cada paquete y engrapa en ese orden.</div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="rejilla rejilla-3" style="margin-bottom:22px;">
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Paquetes</div>
+            <div class="valor numeros" th:text="${#lists.size(paquetes)}">0</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Total con factura</div>
+            <div class="valor numeros"
+                 th:text="'Q ' + ${#numbers.formatDecimal(totalGeneral, 1, 'COMMA', 2, 'POINT')}">Q 0</div>
+        </div>
+        <div class="tarjeta-stat">
+            <div class="etiqueta">Líneas pendientes</div>
+            <div class="valor numeros" th:text="${pendientes}">0</div>
+            <div class="nota">sin factura asignada</div>
+        </div>
+    </div>
+
+    <div class="filtro-rapido">
+        <i class="bi bi-funnel"></i>
+        <input type="search" id="filtro-dte" class="form-control"
+               placeholder="Filtrar por DTE o descripcion dentro de este mes...">
+        <span class="contador-filtro" id="filtro-contador"></span>
+    </div>
+
+    <!-- ======================= CADA PAQUETE (catalogo) ======================= -->
+    <div class="catalogo-paquetes">
+        <details class="paquete-detalle" th:each="p : ${paquetes}" th:id="'paquete-' + ${p.id}">
+            <summary class="paquete-cabecera">
+                <i class="bi bi-chevron-right chevron"></i>
+                <div class="paquete-info">
+                    <div class="paquete-titulo">
+                        <span th:text="'Paquete ' + ${p.numero} + ' · ' + ${p.nombre}">Paquete</span>
+                        <span class="insignia insignia-jade"
+                              th:if="${sumaFacturas[p.id] >= p.totalEsperado - 0.005 and sumaFacturas[p.id] <= p.totalEsperado + 0.005}">COMPLETO</span>
+                        <span class="insignia insignia-ambar"
+                              th:unless="${sumaFacturas[p.id] >= p.totalEsperado - 0.005 and sumaFacturas[p.id] <= p.totalEsperado + 0.005}">INCOMPLETO</span>
+                    </div>
+                    <div class="paquete-sub"
+                         th:text="${#lists.size(lineasPor[p.id])} + ' linea(s)'">0 lineas</div>
+                </div>
+                <div class="paquete-montos">
+                    Esperado Q <span th:text="${#numbers.formatDecimal(p.totalEsperado, 1, 'COMMA', 2, 'POINT')}">0</span>
+                    <span class="monto-fuerte"
+                          th:text="'Q ' + ${#numbers.formatDecimal(sumaFacturas[p.id], 1, 'COMMA', 2, 'POINT')}">Q 0</span>
+                </div>
+            </summary>
+
+            <div class="paquete-cuerpo">
+                <div class="acciones-fila">
+                    <a class="btn-jade" target="_blank"
+                       th:href="@{/dafim/paquetes/paquete/{id}/imprimir(id=${p.id})}">
+                        <i class="bi bi-printer"></i> Imprimir paquete (PDF en orden)
+                    </a>
+                </div>
+                <div class="tabla-envoltura scroll-alto">
+                    <table class="tabla-datos">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Concepto del paquete</th>
+                            <th>Monto</th>
+                            <th>Factura asignada</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="l : ${lineasPor[p.id]}" class="linea-paquete"
+                            th:attr="data-dte=${l.factura != null ? l.factura.numeroDte : ''},
+                                     data-texto=${l.concepto}">
+                            <td class="numeros" th:text="${l.orden}">1</td>
+                            <td class="celda-desc" th:text="${l.concepto}">concepto</td>
+                            <td class="numeros"
+                                th:text="${#numbers.formatDecimal(l.monto, 1, 'COMMA', 2, 'POINT')}">0</td>
+                            <td>
+                                <div th:if="${l.factura != null}">
+                                    <button type="button" class="ver-factura-directa numeros"
+                                            style="background:none; border:0; padding:0; color:var(--jade); cursor:pointer; text-decoration:underline;"
+                                            th:attr="data-pdf=@{/dafim/paquetes/factura/{id}/pdf(id=${l.factura.id})},
+                                                     data-dte=${l.factura.numeroDte},
+                                                     data-emisor=${l.factura.nombreEmisor}"
+                                            th:text="'DTE ' + ${l.factura.numeroDte}">DTE</button>
+                                    <div class="texto-suave texto-chico celda-proveedor"
+                                         th:text="${l.factura.nombreEmisor}"
+                                         th:title="${l.factura.nombreEmisor}">emisor</div>
+                                </div>
+                                <span class="insignia insignia-rojo"
+                                      th:if="${l.factura == null}">PENDIENTE</span>
+                            </td>
+                            <td>
+                                <form th:if="${l.factura == null and !#lists.isEmpty(libres)}"
+                                      th:action="@{/dafim/paquetes/linea/{id}/asignar(id=${l.id})}"
+                                      method="post" class="asignador">
+                                    <input type="hidden" name="anio" th:value="${anio}">
+                                    <input type="hidden" name="mes" th:value="${mes}">
+                                    <input type="search" class="form-control buscador-factura"
+                                           placeholder="Buscar por DTE, monto o descripción...">
+                                    <select name="facturaId" class="form-select selector-factura"
+                                            size="1">
+                                        <option th:each="f : ${libres}" th:value="${f.id}"
+                                                th:attr="data-pdf=@{/dafim/paquetes/factura/{id}/pdf(id=${f.id})}"
+                                                th:text="'DTE ' + ${f.numeroDte} + ' · Q' + ${#numbers.formatDecimal(f.monto, 1, 'COMMA', 2, 'POINT')} + ' · ' + ${#strings.abbreviate(f.descripcion, 60)}">
+                                        </option>
+                                    </select>
+                                    <div class="acciones-fila">
+                                        <button type="button" class="btn-neutro ver-factura">
+                                            <i class="bi bi-eye"></i> Vista previa
+                                        </button>
+                                        <button type="submit" class="btn-jade">Asignar</button>
+                                    </div>
+                                </form>
+                                <form th:if="${l.factura != null}"
+                                      th:action="@{/dafim/paquetes/linea/{id}/quitar(id=${l.id})}"
+                                      method="post" style="display:inline;">
+                                    <input type="hidden" name="anio" th:value="${anio}">
+                                    <input type="hidden" name="mes" th:value="${mes}">
+                                    <button type="submit" class="btn-neutro">Quitar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <!-- ================== FACTURAS SIN PAQUETE ================== -->
+    <div class="tarjeta" th:if="${!#lists.isEmpty(libres)}">
+        <h2>Facturas sin paquete
+            <span class="insignia insignia-ambar" th:text="${#lists.size(libres)}">0</span>
+        </h2>
+        <p class="subtitulo">
+            Se guardaron en la BD pero ninguna linea las reclamo. Puedes
+            asignarlas a mano en la columna de acciones de cada paquete.
+        </p>
+        <div class="tabla-envoltura scroll-alto">
+            <table class="tabla-datos">
+                <thead>
+                <tr>
+                    <th>DTE</th>
+                    <th>Emisor</th>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Descripcion</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="f : ${libres}">
+                    <td class="numeros" th:text="${f.numeroDte}">dte</td>
+                    <td class="celda-proveedor" th:text="${f.nombreEmisor}" th:title="${f.nombreEmisor}">emisor</td>
+                    <td class="numeros"
+                        th:text="${f.fechaEmision != null} ? ${#temporals.format(f.fechaEmision,'dd/MM/yyyy')} : ''">f</td>
+                    <td class="numeros"
+                        th:text="${#numbers.formatDecimal(f.monto, 1, 'COMMA', 2, 'POINT')}">0</td>
+                    <td th:text="${#strings.abbreviate(f.descripcion, 70)}">desc</td>
+                    <td>
+                        <div class="acciones-fila">
+                            <button type="button" class="btn-neutro ver-factura-directa"
+                                    th:attr="data-pdf=@{/dafim/paquetes/factura/{id}/pdf(id=${f.id})},
+                                             data-dte=${f.numeroDte},
+                                             data-emisor=${f.nombreEmisor}">
+                                <i class="bi bi-eye"></i> Vista previa
+                            </button>
+                            <a class="btn-neutro" target="_blank"
+                               th:href="@{/dafim/paquetes/factura/{id}/pdf(id=${f.id})}">Abrir</a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ======================== ACCIONES ======================== -->
+    <div class="acciones-fila mt-18">
+        <a th:href="@{/dafim/paquetes}" class="btn-neutro">Volver a meses</a>
+        <form th:action="@{/dafim/paquetes/{a}/{m}/eliminar(a=${anio},m=${mes})}"
+              method="post" style="display:inline;"
+              onsubmit="return confirm('Se borraran los paquetes, lineas y facturas de este mes. Continuar?');">
+            <button type="submit" class="btn-neutro">
+                <i class="bi bi-trash"></i> Eliminar este mes
+            </button>
+        </form>
+    </div>
+
+    <!-- ================== VISTA PREVIA DE FACTURA ================== -->
+    <div id="modal-factura" class="no-imprimir">
+        <div class="previa-caja">
+            <div class="previa-cabecera">
+                <div class="previa-titulos">
+                    <strong id="previa-dte">Vista previa de la factura</strong>
+                    <span class="texto-suave texto-chico" id="previa-emisor"></span>
+                </div>
+                <button type="button" class="btn-neutro" onclick="cerrarPrevia()">
+                    <i class="bi bi-x-lg"></i> Cerrar
+                </button>
+            </div>
+            <iframe id="marco-factura" src="about:blank"
+                    style="border:0; width:100%; flex:1;"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // buscador dentro del selector de asignacion manual: filtra por DTE, monto o texto
+        document.querySelectorAll('.buscador-factura').forEach(function (caja) {
+            caja.addEventListener('input', function () {
+                var t = caja.value.toLowerCase();
+                var sel = caja.closest('.asignador').querySelector('.selector-factura');
+                var primero = null;
+                Array.prototype.forEach.call(sel.options, function (op) {
+                    var visible = op.text.toLowerCase().indexOf(t) !== -1;
+                    op.hidden = !visible;
+                    if (visible && primero === null) primero = op;
+                });
+                if (primero) sel.value = primero.value;
+            });
+        });
+
+        function abrirPrevia(url, dte, emisor) {
+            document.getElementById('marco-factura').src = url;
+            document.getElementById('previa-dte').textContent = dte ? ('DTE ' + dte) : 'Vista previa de la factura';
+            document.getElementById('previa-emisor').textContent = emisor || '';
+            document.getElementById('modal-factura').style.display = 'block';
+        }
+        function cerrarPrevia() {
+            document.getElementById('modal-factura').style.display = 'none';
+            document.getElementById('marco-factura').src = 'about:blank';
+        }
+        document.getElementById('modal-factura').addEventListener('click', function (e) {
+            if (e.target === this) cerrarPrevia();
+        });
+        // vista previa desde el asignador (usa la opcion seleccionada)
+        document.querySelectorAll('.ver-factura').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var sel = btn.closest('.asignador').querySelector('.selector-factura');
+                var op = sel.options[sel.selectedIndex];
+                if (op && op.getAttribute('data-pdf')) {
+                    abrirPrevia(op.getAttribute('data-pdf'), null, null);
+                }
+            });
+        });
+        // vista previa directa (lineas ya asignadas y facturas sin paquete)
+        document.querySelectorAll('.ver-factura-directa').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                abrirPrevia(btn.getAttribute('data-pdf'), btn.getAttribute('data-dte'), btn.getAttribute('data-emisor'));
+            });
+        });
+
+        // filtro rapido: por DTE o descripcion, dentro de los paquetes del mes
+        var filtro = document.getElementById('filtro-dte');
+        var contador = document.getElementById('filtro-contador');
+        if (filtro) {
+            filtro.addEventListener('input', function () {
+                var q = filtro.value.trim().toLowerCase();
+                var totalCoincidencias = 0;
+                document.querySelectorAll('.paquete-detalle').forEach(function (det) {
+                    var filas = det.querySelectorAll('.linea-paquete');
+                    if (q === '') {
+                        filas.forEach(function (f) { f.removeAttribute('data-oculta'); });
+                        det.style.display = '';
+                        return;
+                    }
+                    var algunaVisible = false;
+                    filas.forEach(function (f) {
+                        var texto = ((f.getAttribute('data-dte') || '') + ' '
+                                + (f.getAttribute('data-texto') || '')).toLowerCase();
+                        var coincide = texto.indexOf(q) !== -1;
+                        f.setAttribute('data-oculta', coincide ? '0' : '1');
+                        if (coincide) { algunaVisible = true; totalCoincidencias++; }
+                    });
+                    det.style.display = algunaVisible ? '' : 'none';
+                    if (algunaVisible) det.open = true;
+                });
+                contador.textContent = q === '' ? '' : (totalCoincidencias + ' coincidencia(s)');
+            });
+        }
+
+        // si se llego con #paquete-X (desde la busqueda global), lo abre y hace scroll
+        if (location.hash) {
+            var destino = document.querySelector(location.hash);
+            if (destino && destino.classList.contains('paquete-detalle')) {
+                destino.open = true;
+                setTimeout(function () {
+                    destino.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }, 60);
+            }
+        }
+    </script>
+
+</div>
+</body>
+</html>

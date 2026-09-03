@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Detalle de renglon', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>
+            <span class="codigo-con-copia">
+                <span th:text="'Renglon ' + ${codigo}">Renglon 000</span>
+                <button type="button" class="btn-copiar"
+                        th:attr="data-copiar=${codigo}"
+                        aria-label="Copiar codigo de renglon" title="Copiar">
+                    <i class="bi bi-clipboard" aria-hidden="true"></i>
+                </button>
+            </span>
+        </h1>
+        <div class="detalle" th:text="${detalle.lineas[0].descripcion}">descripcion</div>
+        <div class="filete"></div>
+    </div>
+
+    <!-- ===================== LINEAS POR FUENTE ========================== -->
+    <div class="tarjeta" data-filtro-ambito>
+        <h2><i class="bi bi-diagram-3"></i> Lineas por fuente</h2>
+        <div th:replace="~{dafim/presupuesto/_filtros :: local}"></div>
+        <p class="subtitulo" data-filtro-vacio-local hidden>0 resultados en estas lineas.</p>
+        <div class="tabla-envoltura scroll-alto">
+            <table class="tabla-datos tabla-zebra tabla-hover">
+                <thead>
+                <tr>
+                    <th>Fuente</th>
+                    <th class="centrado">Actividad / obra</th>
+                    <th class="monto">Vigente Q</th>
+                    <th class="monto">Devengado Q</th>
+                    <th class="monto">Pagado Q</th>
+                    <th class="monto">Saldo Q</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="l : ${detalle.lineas}" data-filtro-fila
+                    th:attr="data-filtro-texto=|${l.fuente} ${l.actividadObra} ${l.descripcion}|,
+                             data-saldo=${l.saldoDisponible > 0 ? '1' : '0'}">
+                    <td class="numeros">
+                        <div class="codigo-con-copia">
+                            <a class="enlace-codigo" th:href="@{/dafim/presupuesto/fuentes/{c}(c=${l.fuente})}">
+                                <strong th:text="${l.fuente}">fuente</strong>
+                            </a>
+                            <button type="button" class="btn-copiar"
+                                    th:attr="data-copiar=${l.fuente}"
+                                    aria-label="Copiar codigo de fuente" title="Copiar">
+                                <i class="bi bi-clipboard" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="centrado numeros" th:text="${l.actividadObra}">actividad</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(l.vigente ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(l.devengado ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(l.pagado ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(l.saldoDisponible ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===================== ULTIMOS PAGOS DEL SISTEMA ==================== -->
+    <div class="tarjeta">
+        <h2><i class="bi bi-receipt"></i> Ultimos pagos del sistema</h2>
+        <p class="subtitulo">Hasta 50, del mas reciente al mas viejo.</p>
+        <div class="vacio-modulo" th:if="${#lists.isEmpty(detalle.pagos)}">
+            <i class="bi bi-receipt" aria-hidden="true"></i>
+            <h2>Sin pagos en este renglon</h2>
+            <p class="subtitulo">El sistema no tiene pagos registrados aqui.</p>
+            <a th:href="@{/dafim/presupuesto/donde-pagar}" class="btn-jade">
+                <i class="bi bi-search-heart"></i> ¿Con que pago?
+            </a>
+        </div>
+        <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(detalle.pagos)}">
+            <table class="tabla-datos tabla-zebra tabla-hover">
+                <thead>
+                <tr>
+                    <th>Periodo</th>
+                    <th>Cheque</th>
+                    <th>NIT</th>
+                    <th>Nombre</th>
+                    <th class="monto">Monto Q</th>
+                    <th>NPG</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${detalle.pagos}">
+                    <td class="numeros" th:text="${meses.get(p.mes)} + ' ' + ${p.anio}">MES 2026</td>
+                    <td class="numeros" th:text="${p.cheque}">cheque</td>
+                    <td class="numeros" th:text="${p.nit}">nit</td>
+                    <td th:text="${p.nombre}">nombre</td>
+                    <td class="monto numeros"
+                        th:text="${#numbers.formatDecimal(p.monto ?: 0, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                    <td class="numeros" th:text="${p.npg}">npg</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Barra GET de renglones: texto + rango + ejecucion + orden + chips. -->
+<div th:fragment="renglones">
+    <form th:action="@{/dafim/presupuesto/renglones}" method="get"
+          class="filtro-rapido estatico barra-filtros" data-filtro data-filtro-servidor>
+        <i class="bi bi-funnel"></i>
+        <input type="search" name="q" class="form-control" data-filtro-vivo data-filtro-q
+               th:value="${q}" placeholder="Filtrar por renglon o descripcion..."
+               aria-label="Filtrar renglones">
+        <label class="filtro-dato">Min Q
+            <input type="text" name="saldoMin" class="form-control" inputmode="decimal"
+                   th:value="${saldoMin}" placeholder="0">
+        </label>
+        <label class="filtro-dato">Max Q
+            <input type="text" name="saldoMax" class="form-control" inputmode="decimal"
+                   th:value="${saldoMax}" placeholder="">
+        </label>
+        <label class="filtro-dato">Ejecucion
+            <select name="ejecucion" class="form-control">
+                <option value="todos" th:selected="${ejecucion == null or ejecucion == 'todos'}">todas</option>
+                <option value="lt70" th:selected="${ejecucion == 'lt70'}">&lt; 70%</option>
+                <option value="70-90" th:selected="${ejecucion == '70-90'}">70–90%</option>
+                <option value="gt90" th:selected="${ejecucion == 'gt90'}">&gt; 90%</option>
+            </select>
+        </label>
+        <label class="filtro-dato">Orden
+            <select name="orden" class="form-control">
+                <option value="saldo" th:selected="${orden == null or orden == 'saldo'}">saldo desc</option>
+                <option value="codigo" th:selected="${orden == 'codigo'}">codigo</option>
+                <option value="ejecucion" th:selected="${orden == 'ejecucion'}">% ejecucion</option>
+            </select>
+        </label>
+        <input type="hidden" name="saldo" id="renglonSaldo" th:value="${saldo}">
+        <label class="filtro-check">
+            <input type="checkbox" data-filtro-hidden="renglonSaldo" data-valor="con"
+                   th:checked="${saldo == 'con'}">
+            solo con saldo libre &gt; 0
+        </label>
+        <button type="submit" class="btn-jade btn-chico">
+            <i class="bi bi-search"></i> Filtrar
+        </button>
+    </form>
+    <div class="chips-filtro">
+        <a class="chip-filtro" th:href="@{/dafim/presupuesto/renglones}">Limpiar todo</a>
+        <a class="chip-filtro" th:classappend="${saldo == 'con'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/renglones(q=${q}, saldoMin=${saldoMin}, saldoMax=${saldoMax}, ejecucion=${ejecucion}, orden=${orden}, saldo='con')}">con saldo</a>
+        <a class="chip-filtro" th:classappend="${saldo == 'agotadas'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/renglones(q=${q}, saldoMin=${saldoMin}, saldoMax=${saldoMax}, ejecucion=${ejecucion}, orden=${orden}, saldo='agotadas')}">agotadas</a>
+    </div>
+    <p class="contador-filtro" th:if="${hayCarga}"
+       th:text="${#lists.size(renglones)} + ' renglones · saldo filtrado Q ' + ${#numbers.formatDecimal(saldoFiltrado ?: 0, 1, 'COMMA', 2, 'POINT')}">0 renglones</p>
+</div>
+
+<!-- Barra GET de fuentes: codigo/nombre + dinero real + orden. El salto por numero sigue aparte. -->
+<div th:fragment="fuentes">
+    <form th:action="@{/dafim/presupuesto/fuentes}" method="get"
+          class="filtro-rapido estatico barra-filtros" data-filtro data-filtro-servidor>
+        <input type="hidden" name="saldo" th:value="${saldo}">
+        <input type="hidden" name="dinero" th:value="${dinero}">
+        <i class="bi bi-funnel"></i>
+        <input type="search" name="q" class="form-control" data-filtro-vivo data-filtro-q
+               th:value="${q}" placeholder="Filtrar tabla por codigo o nombre..."
+               aria-label="Filtrar fuentes">
+        <label class="filtro-dato">Orden
+            <select name="orden" class="form-control">
+                <option value="saldo" th:selected="${orden == null or orden == 'saldo'}">saldo</option>
+                <option value="real" th:selected="${orden == 'real'}">dinero real</option>
+                <option value="codigo" th:selected="${orden == 'codigo'}">codigo</option>
+            </select>
+        </label>
+        <button type="submit" class="btn-jade btn-chico">
+            <i class="bi bi-search"></i> Filtrar
+        </button>
+    </form>
+    <div class="chips-filtro">
+        <a class="chip-filtro" th:href="@{/dafim/presupuesto/fuentes}">Limpiar todo</a>
+        <a class="chip-filtro" th:classappend="${saldo == 'con'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/fuentes(q=${q}, orden=${orden}, saldo='con', dinero=${dinero})}">con saldo</a>
+        <a class="chip-filtro" th:classappend="${saldo == 'agotadas'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/fuentes(q=${q}, orden=${orden}, saldo='agotadas', dinero=${dinero})}">agotadas</a>
+        <a class="chip-filtro" th:if="${hayBoletin}" th:classappend="${dinero == 'real'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/fuentes(q=${q}, orden=${orden}, saldo=${saldo}, dinero='real')}">con dinero real &gt; 0</a>
+        <a class="chip-filtro" th:classappend="${dinero == 'cero'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/fuentes(q=${q}, orden=${orden}, saldo=${saldo}, dinero='cero')}">sin boletin / en cero</a>
+    </div>
+    <p class="contador-filtro" th:if="${hayCarga}"
+       th:text="${#lists.size(fuentes)} + (${#lists.size(fuentes) == 1} ? ' fuente' : ' fuentes')">0 fuentes</p>
+</div>
+
+<!-- Chips y recortes de ¿Con que pago? (el matcher no cambia). -->
+<div th:fragment="dondePagar">
+    <div class="chips-filtro" th:if="${atajos != null and !#lists.isEmpty(atajos)}">
+        <span class="chips-etiqueta">Renglones frecuentes</span>
+        <a class="chip-filtro" th:each="c : ${atajos}"
+           th:classappend="${q == c} ? 'activo'"
+           th:href="@{/dafim/presupuesto/donde-pagar(q=${c}, monto=${monto}, soloPres=${soloPres ? '1' : ''}, soloBanco=${soloBanco ? '1' : ''}, saldo=${saldo}, banco=${banco})}"
+           th:text="${c}">154</a>
+    </div>
+    <div class="chips-filtro">
+        <a class="chip-filtro" th:href="@{/dafim/presupuesto/donde-pagar}">Limpiar todo</a>
+        <a class="chip-filtro" th:classappend="${saldo == 'con'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/donde-pagar(q=${q}, monto=${monto}, soloPres=${soloPres ? '1' : ''}, soloBanco=${soloBanco ? '1' : ''}, saldo='con', banco=${banco})}">con saldo</a>
+        <a class="chip-filtro" th:classappend="${saldo == 'agotadas'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/donde-pagar(q=${q}, monto=${monto}, soloPres=${soloPres ? '1' : ''}, soloBanco=${soloBanco ? '1' : ''}, saldo='agotadas', banco=${banco})}">agotadas</a>
+        <a class="chip-filtro" th:if="${hayBoletin}" th:classappend="${banco == 'alcanza'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/donde-pagar(q=${q}, monto=${monto}, soloPres=${soloPres ? '1' : ''}, soloBanco=${soloBanco ? '1' : ''}, saldo=${saldo}, banco='alcanza')}">banco alcanza</a>
+        <a class="chip-filtro" th:if="${hayBoletin}" th:classappend="${banco == 'no'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/donde-pagar(q=${q}, monto=${monto}, soloPres=${soloPres ? '1' : ''}, soloBanco=${soloBanco ? '1' : ''}, saldo=${saldo}, banco='no')}">banco no alcanza</a>
+    </div>
+</div>
+
+<!-- Barra GET de apartados (estado se conserva en hidden). -->
+<div th:fragment="apartados">
+    <form th:action="@{/dafim/presupuesto/apartados}" method="get"
+          class="filtro-rapido estatico barra-filtros" data-filtro data-filtro-servidor>
+        <input type="hidden" name="estado" th:value="${estado}">
+        <input type="hidden" name="tipo" th:value="${tipo}">
+        <input type="hidden" name="grupo" th:value="${grupo}">
+        <i class="bi bi-funnel"></i>
+        <input type="search" name="q" class="form-control" data-filtro-vivo data-filtro-q
+               th:value="${q}" placeholder="Concepto, renglon, fuente o usuario..."
+               aria-label="Filtrar apartados">
+        <label class="filtro-dato">Fuente
+            <select name="fuente" class="form-control">
+                <option value="">todas</option>
+                <option th:each="f : ${fuentesOpciones}" th:value="${f}" th:text="${f}"
+                        th:selected="${f == fuente}">00-0000-0000</option>
+            </select>
+        </label>
+        <label class="filtro-dato">Desde
+            <input type="date" name="desde" class="form-control" th:value="${desde}">
+        </label>
+        <label class="filtro-dato">Hasta
+            <input type="date" name="hasta" class="form-control" th:value="${hasta}">
+        </label>
+        <button type="submit" class="btn-jade btn-chico">
+            <i class="bi bi-search"></i> Filtrar
+        </button>
+    </form>
+    <div class="chips-filtro">
+        <a class="chip-filtro" th:href="@{/dafim/presupuesto/apartados(estado=${estado})}">Limpiar todo</a>
+        <a class="chip-filtro" th:classappend="${tipo == 'pres'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/apartados(estado=${estado}, q=${q}, tipo='pres', fuente=${fuente}, desde=${desde}, hasta=${hasta}, grupo=${grupo})}">solo presupuesto (sin efectivo)</a>
+        <a class="chip-filtro" th:classappend="${tipo == 'banco'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/apartados(estado=${estado}, q=${q}, tipo='banco', fuente=${fuente}, desde=${desde}, hasta=${hasta}, grupo=${grupo})}">con banco</a>
+        <a class="chip-filtro" th:classappend="${grupo != 'dia'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/apartados(estado=${estado}, q=${q}, tipo=${tipo}, fuente=${fuente}, desde=${desde}, hasta=${hasta}, grupo='fuente')}">Por fuente</a>
+        <a class="chip-filtro" th:classappend="${grupo == 'dia'} ? 'activo'"
+           th:href="@{/dafim/presupuesto/apartados(estado=${estado}, q=${q}, tipo=${tipo}, fuente=${fuente}, desde=${desde}, hasta=${hasta}, grupo='dia')}">Por dia</a>
+    </div>
+</div>
+
+<!-- Buscador local (detalle): texto + con saldo, sin GET. -->
+<div th:fragment="local" class="filtro-rapido estatico barra-filtros">
+    <i class="bi bi-funnel"></i>
+    <input type="search" class="form-control" data-filtro-vivo data-filtro-q
+           placeholder="Filtrar estas lineas..."
+           aria-label="Filtrar estas lineas">
+    <button type="button" class="chip-filtro" data-filtro-chip="saldo" data-valor="con">con saldo</button>
+    <button type="button" class="chip-filtro" data-filtro-chip="saldo" data-valor="agotadas">agotadas</button>
+    <span class="contador-filtro" data-filtro-conteo></span>
+</div>
+
+</body>
+</html>

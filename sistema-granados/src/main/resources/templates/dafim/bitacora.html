@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Bitácora BD', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <div class="folio">
+        <div class="ceja">DAFIM · Bitácora</div>
+        <h1>Bitácora de la base de datos</h1>
+        <div class="detalle">
+            Compras, presupuesto de la carga activa, apartados y facturas FEL.
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="tarjeta">
+        <form th:action="@{/dafim/bitacora}" method="get">
+            <div class="acciones-fila">
+                <input type="text" name="q" class="form-control"
+                       style="flex:1; min-width:200px; max-width:560px;"
+                       placeholder="NIT, nombre, renglón, fuente, DTE, cheque, concepto..."
+                       th:value="${q}" autofocus>
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+                <a th:href="@{/dafim/bitacora}" class="btn-neutro">Limpiar</a>
+            </div>
+            <div class="rejilla rejilla-4 mt-12">
+                <div class="campo">
+                    <label class="form-label" for="fTipo">Compras</label>
+                    <select class="form-select" id="fTipo" name="tipo">
+                        <option value="TODOS" th:selected="${tipo == 'TODOS'}">Todo</option>
+                        <option value="CONTRATOS" th:selected="${tipo == 'CONTRATOS'}">Contratos 029</option>
+                        <option value="PROVEEDORES" th:selected="${tipo == 'PROVEEDORES'}">Proveedores</option>
+                        <option value="PAGOS" th:selected="${tipo == 'PAGOS'}">Pagos</option>
+                        <option value="PUBLICACIONES" th:selected="${tipo == 'PUBLICACIONES'}">Publicaciones Guatecompras</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label class="form-label" for="fRenglon">Renglón</label>
+                    <input type="text" class="form-control numeros" id="fRenglon"
+                           name="renglon" th:value="${renglon}" placeholder="029, 142...">
+                </div>
+                <div class="campo">
+                    <label class="form-label" for="fAnio">Año</label>
+                    <input type="number" class="form-control numeros" id="fAnio"
+                           name="anio" th:value="${anio}" min="2020" max="2100" placeholder="2026">
+                </div>
+                <div class="campo">
+                    <label class="form-label" for="fMes">Mes</label>
+                    <select class="form-select" id="fMes" name="mes">
+                        <option value="">Todos</option>
+                        <option value="1" th:selected="${mes == 1}">Enero</option>
+                        <option value="2" th:selected="${mes == 2}">Febrero</option>
+                        <option value="3" th:selected="${mes == 3}">Marzo</option>
+                        <option value="4" th:selected="${mes == 4}">Abril</option>
+                        <option value="5" th:selected="${mes == 5}">Mayo</option>
+                        <option value="6" th:selected="${mes == 6}">Junio</option>
+                        <option value="7" th:selected="${mes == 7}">Julio</option>
+                        <option value="8" th:selected="${mes == 8}">Agosto</option>
+                        <option value="9" th:selected="${mes == 9}">Septiembre</option>
+                        <option value="10" th:selected="${mes == 10}">Octubre</option>
+                        <option value="11" th:selected="${mes == 11}">Noviembre</option>
+                        <option value="12" th:selected="${mes == 12}">Diciembre</option>
+                    </select>
+                </div>
+            </div>
+            <label class="mt-12" style="display:flex; gap:8px; align-items:center;">
+                <input type="checkbox" name="sinPago" value="true" th:checked="${sinPago}">
+                <span>Solo publicaciones cuyo NPG no esta en un cheque guardado</span>
+            </label>
+            <p class="mt-12">
+                <a th:href="@{/dafim/bitacora(tipo='PUBLICACIONES')}">Ver todas las publicaciones NPG</a>
+            </p>
+        </form>
+    </div>
+
+    <th:block th:if="${buscado}">
+
+        <div class="aviso aviso-ambar" role="status"
+             th:if="${#lists.isEmpty(contratos) and #lists.isEmpty(proveedores)
+                      and #lists.isEmpty(pagos) and #lists.isEmpty(publicaciones)
+                      and #lists.isEmpty(lineasPresupuesto)
+                      and #lists.isEmpty(fuentes) and #lists.isEmpty(apartados)
+                      and #lists.isEmpty(facturas)}">
+            <i class="bi bi-search"></i>
+            <div>Sin coincidencias en compras, presupuesto ni facturas.</div>
+        </div>
+
+        <details class="panel-desplegable" open th:if="${!#lists.isEmpty(pagos) or !#lists.isEmpty(contratos) or !#lists.isEmpty(proveedores)}">
+            <summary>
+                Compras
+                <span class="insignia insignia-pino"
+                      th:text="${#lists.size(contratos) + #lists.size(proveedores) + #lists.size(pagos)}">0</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <h2>Personal 029 <span class="insignia insignia-pino" th:text="${#lists.size(contratos)}">0</span></h2>
+                <div class="tabla-envoltura" th:if="${!#lists.isEmpty(contratos)}">
+                    <table class="tabla-datos">
+                        <thead><tr><th>NIT</th><th>Nombre</th><th>Contrato</th><th>Cargo</th><th>NPG</th><th class="centrado">Año</th></tr></thead>
+                        <tbody>
+                        <tr th:each="c : ${contratos}">
+                            <td class="numeros" th:text="${c.nit}">nit</td>
+                            <td class="celda-proveedor" th:text="${c.nombre}" th:title="${c.nombre}">nombre</td>
+                            <td class="numeros" th:text="${c.contrato}">contrato</td>
+                            <td th:text="${c.cargo}">cargo</td>
+                            <td class="numeros" th:text="${c.npg}">npg</td>
+                            <td class="centrado numeros" th:text="${c.anio}">2026</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <h2 class="mt-18">Proveedores <span class="insignia insignia-pino" th:text="${#lists.size(proveedores)}">0</span></h2>
+                <div class="tabla-envoltura" th:if="${!#lists.isEmpty(proveedores)}">
+                    <table class="tabla-datos">
+                        <thead><tr><th>NIT</th><th>Nombre</th><th class="centrado">Renglón</th><th>Descripción</th></tr></thead>
+                        <tbody>
+                        <tr th:each="p : ${proveedores}">
+                            <td class="numeros" th:text="${p.nit}">nit</td>
+                            <td class="celda-proveedor" th:text="${p.nombre}" th:title="${p.nombre}">nombre</td>
+                            <td class="centrado"><span class="insignia insignia-neutra" th:text="${p.renglon}">299</span></td>
+                            <td class="celda-desc" th:text="${p.descripcion}">desc</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <h2 class="mt-18">Pagos <span class="insignia insignia-pino" th:text="${#lists.size(pagos)}">0</span></h2>
+                <div class="tabla-envoltura scroll-alto" th:if="${!#lists.isEmpty(pagos)}">
+                    <table class="tabla-datos">
+                        <thead><tr><th class="centrado">Mes</th><th>Cheque</th><th>NIT</th><th>Nombre</th><th class="centrado">Reng.</th><th class="monto">Monto Q</th><th>NPG</th><th>Contrato</th></tr></thead>
+                        <tbody>
+                        <tr th:each="h : ${pagos}">
+                            <td class="centrado numeros" th:text="${#numbers.formatInteger(h.mes,2)} + '/' + ${h.anio}">01/2026</td>
+                            <td class="numeros" th:text="${h.cheque}">cheque</td>
+                            <td class="numeros" th:text="${h.nit}">nit</td>
+                            <td class="celda-proveedor" th:text="${h.nombre}" th:title="${h.nombre}">nombre</td>
+                            <td class="centrado"><span class="insignia" th:classappend="${h.renglon == '029'} ? 'insignia-pino' : 'insignia-neutra'" th:text="${h.renglon}">reng</span></td>
+                            <td class="monto numeros" th:text="${#numbers.formatDecimal(h.monto, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                            <td class="numeros" th:text="${h.npg}">npg</td>
+                            <td class="numeros" th:text="${h.contrato}">contrato</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </details>
+
+        <details class="panel-desplegable" open th:if="${!#lists.isEmpty(publicaciones)}">
+            <summary>
+                Publicaciones Guatecompras
+                <span class="insignia insignia-pino"
+                      th:text="${#lists.size(publicaciones)}">0</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <p class="subtitulo">Catalogo de NPG. Incluye las que no salieron en el informe de cheques.</p>
+                <div class="tabla-envoltura scroll-alto">
+                    <table class="tabla-datos">
+                        <thead>
+                        <tr>
+                            <th>NPG</th><th>Persona</th><th>NIT</th>
+                            <th>Descripcion</th><th class="monto">Monto Q</th>
+                            <th class="centrado">Mes</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="p : ${publicaciones}">
+                            <td class="numeros" th:text="${p.npg}">E00</td>
+                            <td class="celda-proveedor" th:text="${p.nombre}" th:title="${p.nombre}">nombre</td>
+                            <td class="numeros" th:text="${p.nit}">nit</td>
+                            <td class="celda-desc" th:text="${p.descripcion}">desc</td>
+                            <td class="monto numeros"
+                                th:text="${p.monto != null} ? ${#numbers.formatDecimal(p.monto, 1, 'COMMA', 2, 'POINT')} : '0.00'">0.00</td>
+                            <td class="centrado numeros"
+                                th:text="${p.mes != null} ? ${#numbers.formatInteger(p.mes,2)} + '/' + ${p.anio} : '—'">08/2026</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </details>
+
+        <details class="panel-desplegable" open th:if="${!#lists.isEmpty(lineasPresupuesto) or !#lists.isEmpty(fuentes) or !#lists.isEmpty(apartados)}">
+            <summary>
+                Presupuesto
+                <span class="insignia insignia-pino"
+                      th:text="${#lists.size(lineasPresupuesto) + #lists.size(fuentes) + #lists.size(apartados)}">0</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <h2>Renglones (carga activa) <span class="insignia insignia-pino" th:text="${#lists.size(lineasPresupuesto)}">0</span></h2>
+                <div class="tabla-envoltura" th:if="${!#lists.isEmpty(lineasPresupuesto)}">
+                    <table class="tabla-datos">
+                        <thead><tr><th>Renglón</th><th>Descripción</th><th>Fuente</th><th class="monto">Vigente Q</th><th class="monto">Saldo Q</th></tr></thead>
+                        <tbody>
+                        <tr th:each="l : ${lineasPresupuesto}">
+                            <td><a th:href="@{/dafim/presupuesto/renglones/{c}(c=${l.renglon})}" th:text="${l.renglon}">000</a></td>
+                            <td class="celda-desc" th:text="${l.descripcion}">desc</td>
+                            <td class="numeros"><a th:href="@{/dafim/presupuesto/fuentes/{c}(c=${l.fuente})}" th:text="${l.fuente}">00</a></td>
+                            <td class="monto numeros" th:text="${#numbers.formatDecimal(l.vigente, 1, 'COMMA', 2, 'POINT')}">0</td>
+                            <td class="monto numeros" th:text="${#numbers.formatDecimal(l.saldoDisponible, 1, 'COMMA', 2, 'POINT')}">0</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <h2 class="mt-18">Fuentes <span class="insignia insignia-pino" th:text="${#lists.size(fuentes)}">0</span></h2>
+                <div class="tabla-envoltura" th:if="${!#lists.isEmpty(fuentes)}">
+                    <table class="tabla-datos">
+                        <thead><tr><th>Código</th><th>Nombre</th></tr></thead>
+                        <tbody>
+                        <tr th:each="f : ${fuentes}">
+                            <td class="numeros"><a th:href="@{/dafim/presupuesto/fuentes/{c}(c=${f.codigo})}" th:text="${f.codigo}">00</a></td>
+                            <td th:text="${f.nombre}">nombre</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <h2 class="mt-18">Apartados <span class="insignia insignia-pino" th:text="${#lists.size(apartados)}">0</span></h2>
+                <div class="tabla-envoltura" th:if="${!#lists.isEmpty(apartados)}">
+                    <table class="tabla-datos">
+                        <thead><tr><th>Concepto</th><th>Renglón</th><th>Fuente</th><th class="monto">Presupuesto Q</th><th>Estado</th></tr></thead>
+                        <tbody>
+                        <tr th:each="a : ${apartados}">
+                            <td class="celda-desc" th:text="${a.concepto}">concepto</td>
+                            <td class="centrado" th:text="${a.renglon}">000</td>
+                            <td class="numeros" th:text="${a.fuente}">00</td>
+                            <td class="monto numeros" th:text="${#numbers.formatDecimal(a.montoPresupuesto, 1, 'COMMA', 2, 'POINT')}">0</td>
+                            <td><span class="insignia insignia-neutra" th:text="${a.estado}">ACTIVO</span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </details>
+
+        <details class="panel-desplegable" open th:if="${!#lists.isEmpty(facturas)}">
+            <summary>
+                Facturas FEL
+                <span class="insignia insignia-pino" th:text="${#lists.size(facturas)}">0</span>
+                <i class="bi bi-chevron-right chevron"></i>
+            </summary>
+            <div class="panel-cuerpo">
+                <div class="tabla-envoltura">
+                    <table class="tabla-datos">
+                        <thead><tr><th>DTE</th><th>NIT</th><th>Emisor</th><th class="monto">Monto Q</th><th>Mes</th><th>Paquete</th></tr></thead>
+                        <tbody>
+                        <tr th:each="r : ${facturas}">
+                            <td class="numeros" th:text="${r.factura.numeroDte}">dte</td>
+                            <td class="numeros" th:text="${r.factura.nitEmisor}">nit</td>
+                            <td class="celda-proveedor" th:text="${r.factura.nombreEmisor}">emisor</td>
+                            <td class="monto numeros" th:text="${#numbers.formatDecimal(r.factura.monto, 1, 'COMMA', 2, 'POINT')}">0</td>
+                            <td class="centrado numeros" th:text="${r.factura.mes} + '/' + ${r.factura.anio}">1/2026</td>
+                            <td>
+                                <a th:if="${r.linea != null}"
+                                   th:href="@{/dafim/paquetes/{a}/{m}(a=${r.factura.anio},m=${r.factura.mes})}">Ver mes</a>
+                                <span th:if="${r.linea == null}" class="texto-suave">libre</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </details>
+
+    </th:block>
+
+</div>
+</body>
+</html>
