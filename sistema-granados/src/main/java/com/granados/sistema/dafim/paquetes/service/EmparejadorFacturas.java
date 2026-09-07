@@ -31,9 +31,12 @@ import java.util.Set;
  * FASE 2 - INEQUIVOCOS: para las lineas que quedaron sin factura (por
  * typos del Excel, espacios, etc.), solo se asigna si el match es CLARO:
  * la mejor factura libre supera un umbral alto (0.80) Y le saca un margen
- * evidente (0.12) a la segunda mejor. Si dos facturas de distinto caserio
- * o distinta maquina se parecen entre si, NO se adivina: la linea queda
- * PENDIENTE para resolverla a mano con el buscador.
+ * evidente (0.12) a la segunda mejor. Ademas hay VETO NUMERICO: si ambos
+ * textos traen la misma cantidad de numeros pero distintos (16 horas vs
+ * 18 horas, "manzanote 1" vs "manzanote 2"), la candidata se descarta aunque
+ * la similitud sea alta. Si dos facturas de distinto caserio o distinta
+ * maquina se parecen entre si, NO se adivina: la linea queda PENDIENTE
+ * para resolverla a mano con el buscador.
  *
  * Por que asi: cuando falta la factura correcta de una linea (archivo
  * corrupto, duplicado descartado, factura que no vino), un umbral bajo
@@ -159,6 +162,8 @@ public final class EmparejadorFacturas {
                 if (usadas.contains(fi)) continue;
                 FacturaSatDatos f = facturas.get(fi);
                 if (Math.abs(f.getMonto() - ref.linea.getMonto()) > 0.005) continue;
+                if (numerosIncompatibles(ref.linea.getConcepto(),
+                        f.getDescripcion())) continue;
                 double sim = similitudFina(ref.linea.getConcepto(), f.getDescripcion());
                 if (sim > mejorSim) {
                     segundaSim = mejorSim;
@@ -275,8 +280,14 @@ public final class EmparejadorFacturas {
                 .toUpperCase(Locale.ROOT)
                 .replaceAll("[^A-Z0-9 ]", " ");
         for (String t : plano.split("\\s+")) {
+            if (t.isEmpty()) continue;
+            // Los numeros de UN digito tambien cuentan: "manzanote 1" y
+            // "manzanote 2" son caserios distintos con el mismo monto;
+            // botando el numero, ambas descripciones eran identicas y el
+            // emparejador cruzaba las facturas entre caserios.
+            if (t.length() < 2 && !contieneDigito(t)) continue;
             // palabras vacias tipicas que no aportan a distinguir
-            if (t.length() >= 2 && !t.equals("DE") && !t.equals("LA")
+            if (!t.equals("DE") && !t.equals("LA")
                     && !t.equals("EL") && !t.equals("DEL") && !t.equals("PARA")
                     && !t.equals("POR") && !t.equals("PAGO") && !t.equals("CON")
                     && !t.equals("UNA") && !t.equals("CADA")) {
@@ -284,5 +295,39 @@ public final class EmparejadorFacturas {
             }
         }
         return out;
+    }
+
+    private static boolean contieneDigito(String t) {
+        for (int i = 0; i < t.length(); i++) {
+            if (Character.isDigit(t.charAt(i))) return true;
+        }
+        return false;
+    }
+
+    /** Solo los tokens que son numeros puros (horas, cantidades, caserio). */
+    private static Set<String> numeros(Set<String> ts) {
+        Set<String> out = new LinkedHashSet<>();
+        for (String t : ts) {
+            boolean puro = true;
+            for (int i = 0; i < t.length(); i++) {
+                if (!Character.isDigit(t.charAt(i))) { puro = false; break; }
+            }
+            if (puro) out.add(t);
+        }
+        return out;
+    }
+
+    /**
+     * Veto de la FASE 2: si ambos textos traen la misma cantidad de
+     * numeros pero distintos, son servicios distintos aunque todo lo demas
+     * sea igual (16 horas nunca es 18 horas; manzanote 1 nunca es
+     * manzanote 2). Si un lado no trae numero, no se veta: se deja que la
+     * similitud decida como antes.
+     */
+    static boolean numerosIncompatibles(String a, String b) {
+        Set<String> na = numeros(tokens(a));
+        Set<String> nb = numeros(tokens(b));
+        return !na.isEmpty() && !nb.isEmpty()
+                && na.size() == nb.size() && !na.equals(nb);
     }
 }

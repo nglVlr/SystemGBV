@@ -170,4 +170,75 @@ class EmparejadorFacturasTest {
                 "16 horas de renta de maquinaria tipo vibrocompactador para mejoramiento de carretera aldea Ixchel");
         assertTrue(s >= 0.45, "similitud=" + s);
     }
+
+    @Test
+    void manzanoteUnoYDosNoSeCruzan() {
+        // Caso real: mismo monto (misma hora/maquina), mismas palabras y
+        // solo cambia el numero de caserio. Las facturas suben EN DESORDEN
+        // y la de manzanote 2 es la MAS ANTIGUA: con el bug anterior la
+        // linea de manzanote 1 se llevaba la factura de manzanote 2.
+        PaqueteDatos p = new PaqueteDatos();
+        p.setNombreHoja("PAQUETE 1");
+        p.getLineas().add(new PaqueteDatos.Linea(1,
+                "pago por maquinaria tipo patrol tipo vibrocompactador para "
+                        + "mejoramiento de carretera caserio manzanote 1", 5750));
+        p.getLineas().add(new PaqueteDatos.Linea(2,
+                "pago por maquinaria tipo patrol tipo vibrocompactador para "
+                        + "mejoramiento de carretera caserio manzanote 2", 5750));
+
+        List<FacturaSatDatos> fs = new ArrayList<>();
+        fs.add(factura("AAAA0002-0000-0000-0000-000000000000",
+                "pago por maquinaria tipo patrol tipo vibrocompactador para "
+                        + "mejoramiento de carretera caserio manzanote 2", 5750,
+                LocalDate.of(2026, 7, 1)));
+        fs.add(factura("AAAA0001-0000-0000-0000-000000000000",
+                "pago por maquinaria tipo patrol tipo vibrocompactador para "
+                        + "mejoramiento de carretera caserio manzanote 1", 5750,
+                LocalDate.of(2026, 7, 5)));
+
+        EmparejadorFacturas.Resultado r =
+                EmparejadorFacturas.emparejar(List.of(p), fs, Set.of());
+        assertEquals(2, r.asignaciones.get(0).size());
+        assertEquals(1, r.asignaciones.get(0).get(1),
+                "linea manzanote 1 debe llevar la factura de manzanote 1");
+        assertEquals(0, r.asignaciones.get(0).get(2),
+                "linea manzanote 2 debe llevar la factura de manzanote 2");
+        assertTrue(r.sinPaquete.isEmpty());
+    }
+
+    @Test
+    void sinFacturaDeSuCaserioLaLineaQuedaPendiente() {
+        // Solo vino la factura de manzanote 1. La linea de manzanote 2 NO
+        // debe robarsela aunque el monto sea identico: queda pendiente
+        // para asignarla a mano con el buscador.
+        PaqueteDatos p = new PaqueteDatos();
+        p.getLineas().add(new PaqueteDatos.Linea(1,
+                "pago por maquinaria tipo patrol tipo vibrocompactador para "
+                        + "mejoramiento de carretera caserio manzanote 2", 5750));
+        List<FacturaSatDatos> fs = List.of(
+                factura("AAAA0001-0000-0000-0000-000000000000",
+                        "pago por maquinaria tipo patrol tipo vibrocompactador para "
+                                + "mejoramiento de carretera caserio manzanote 1",
+                        5750, LocalDate.of(2026, 7, 2)));
+        EmparejadorFacturas.Resultado r =
+                EmparejadorFacturas.emparejar(List.of(p), fs, Set.of());
+        assertTrue(r.asignaciones.get(0).isEmpty(),
+                "manzanote 2 sin su factura no debe agarrar la de manzanote 1");
+        assertEquals(1, r.sinPaquete.size());
+    }
+
+    @Test
+    void horasDistintasNuncaSeCruzanAunqueElRestoSeaIgual() {
+        PaqueteDatos p = new PaqueteDatos();
+        p.getLineas().add(new PaqueteDatos.Linea(1,
+                "pago de 16 horas de renta de maquinaria tipo patrol", 8000));
+        List<FacturaSatDatos> fs = List.of(
+                factura("BBBB0001-0000-0000-0000-000000000000",
+                        "pago de 18 horas de renta de maquinaria tipo patrol",
+                        8000, LocalDate.of(2026, 7, 1)));
+        EmparejadorFacturas.Resultado r =
+                EmparejadorFacturas.emparejar(List.of(p), fs, Set.of());
+        assertTrue(r.asignaciones.get(0).isEmpty());
+        assertEquals(1, r.sinPaquete.size());
+    }
 }
