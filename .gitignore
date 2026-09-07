@@ -1,0 +1,24 @@
+# Compilados de Maven
+target/
+*.class
+
+# Respaldos y datos de la base (NUNCA subir a la nube)
+*.dump
+*.backup
+backup_*
+storage/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
