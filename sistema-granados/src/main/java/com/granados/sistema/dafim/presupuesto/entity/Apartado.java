@@ -66,6 +66,14 @@ public class Apartado {
     @Column(name = "linea_id")
     private Long lineaId;
 
+    /** Factura SAT que origino el apartado (asistente de distribucion); nulo en apartados manuales. */
+    @Column(name = "factura_id")
+    private Long facturaId;
+
+    /** Grupo con que el asistente clasifico la factura (EDUCACION, MUNICIPAL, ...); nulo en manuales. */
+    @Column(length = 20)
+    private String grupo;
+
     @Column(length = 200, nullable = false)
     private String concepto;
 
@@ -107,6 +115,10 @@ public class Apartado {
     public void setActividad(String actividad) { this.actividad = actividad; }
     public Long getLineaId() { return lineaId; }
     public void setLineaId(Long lineaId) { this.lineaId = lineaId; }
+    public Long getFacturaId() { return facturaId; }
+    public void setFacturaId(Long facturaId) { this.facturaId = facturaId; }
+    public String getGrupo() { return grupo; }
+    public void setGrupo(String grupo) { this.grupo = grupo; }
     public String getConcepto() { return concepto; }
     public void setConcepto(String concepto) { this.concepto = concepto; }
     public BigDecimal getMontoPresupuesto() { return montoPresupuesto; }

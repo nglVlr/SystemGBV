@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Distribuir pagos', ~{:: #pagina})}">
+<body>
+<div id="pagina">
+
+    <!-- CSRF para los fetch POST de distribuir.js -->
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+    <!-- Hoja de calculo vendored (sin CDN) -->
+    <link rel="stylesheet" th:href="@{/vendor/jspreadsheet/jsuites.css}">
+    <link rel="stylesheet" th:href="@{/vendor/jspreadsheet/jspreadsheet.css}">
+
+    <div th:replace="~{dafim/presupuesto/_nav :: cascaron}"></div>
+
+    <div class="folio compacto">
+        <h1>Distribuir pagos</h1>
+        <div class="detalle">
+            Las facturas del mes en una hoja de cálculo. La IA propone grupo,
+            renglón y fuente para cada una; tú revisas, ajustas y aplicas.
+            Nada se guarda hasta que presiones «Aplicar y crear apartados».
+        </div>
+        <div class="filete"></div>
+    </div>
+
+    <div class="aviso aviso-ambar" th:if="${!iaActiva}" role="alert">
+        <i class="bi bi-robot"></i>
+        <div>
+            La IA no está configurada: falta <strong>GEMINI_API_KEY</strong> en el
+            servidor. Se clasificará con <strong>reglas locales</strong> por palabras
+            clave; revisa bien cada fila antes de aplicar.
+        </div>
+    </div>
+
+    <!-- ========================= SELECTOR DE MES ========================= -->
+    <div class="tarjeta mb-18" th:if="${!#lists.isEmpty(meses)}">
+        <form th:action="@{/dafim/presupuesto/distribuir}" method="get"
+              id="formMes" class="rejilla rejilla-4">
+            <div class="campo">
+                <label class="form-label" for="fMesAnio">Mes con facturas</label>
+                <select class="form-select" id="fMesAnio" aria-describedby="ayudaMes">
+                    <option th:each="m : ${meses}"
+                            th:value="${m.anio + '-' + m.mes}"
+                            th:attr="data-mes=${m.mes}, data-anio=${m.anio}"
+                            th:selected="${m.mes == mes and m.anio == anio}"
+                            th:text="${m.etiqueta + ' · ' + m.facturas + ' factura(s)'}">
+                        Septiembre 2026 · 12 factura(s)</option>
+                </select>
+                <input type="hidden" name="mes" id="fMes" th:value="${mes}">
+                <input type="hidden" name="anio" id="fAnio" th:value="${anio}">
+                <div class="ayuda" id="ayudaMes">Solo meses con facturas cargadas.</div>
+            </div>
+            <div class="acciones-fila acciones-fin">
+                <button type="submit" class="btn-jade">
+                    <i class="bi bi-arrow-repeat"></i> Consultar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="tarjeta vacio-modulo" th:if="${#lists.isEmpty(meses)}">
+        <i class="bi bi-receipt" aria-hidden="true"></i>
+        <h2>No hay facturas cargadas</h2>
+        <p class="subtitulo">
+            Primero sube las facturas del mes en Cargas; luego vuelve aquí para
+            distribuir los pagos.
+        </p>
+        <a th:href="@{/dafim/presupuesto/cargar}" class="btn-jade">
+            <i class="bi bi-file-earmark-pdf"></i> Ir a Cargas
+        </a>
+    </div>
+
+    <th:block th:if="${!#lists.isEmpty(meses)}">
+
+        <!-- ============================ LA HOJA ============================ -->
+        <div class="tarjeta" id="tarjetaHoja">
+            <h2>
+                Facturas del mes
+                <span class="insignia insignia-pino" id="conteoFilas"
+                      th:text="${#lists.size(filas)}">0</span>
+            </h2>
+            <p class="subtitulo">
+                Cambia grupo, renglón o fuente directo en la hoja. Las filas en rojo
+                no tienen saldo suficiente en la línea presupuestaria.
+            </p>
+
+            <div class="acciones-fila mb-16">
+                <button type="button" class="btn-jade" id="btnClasificar">
+                    <i class="bi bi-stars"></i> Clasificar con IA
+                </button>
+                <span class="ayuda sin-margen" id="estadoClasificar">
+                    La IA propone; tú decides. Nada se guarda todavía.
+                </span>
+            </div>
+
+            <div id="hojaDistribuir"></div>
+
+            <div class="tarjeta vacio-modulo" id="hojaVacia"
+                 th:hidden="${!#lists.isEmpty(filas)}">
+                <i class="bi bi-inbox" aria-hidden="true"></i>
+                <h2>Sin facturas en este mes</h2>
+                <p class="subtitulo">
+                    No hay facturas de este mes por distribuir, o ya se aplicaron.
+                </p>
+            </div>
+        </div>
+
+        <!-- ===================== TOTALES EN VIVO (PIE) ===================== -->
+        <div class="rejilla rejilla-2 mt-18" id="zonaTotales"
+             th:hidden="${#lists.isEmpty(filas)}">
+            <div class="tarjeta">
+                <h2 class="h2-compacto"><i class="bi bi-diagram-3"></i> Totales por grupo</h2>
+                <p class="subtitulo">Cuánto se apartaría por grupo de gasto.</p>
+                <div class="tabla-envoltura">
+                    <table class="tabla-datos">
+                        <thead>
+                        <tr>
+                            <th scope="col">Grupo</th>
+                            <th scope="col" class="centrado">Facturas</th>
+                            <th scope="col" class="monto">Total Q</th>
+                        </tr>
+                        </thead>
+                        <tbody id="totalesGrupo"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tarjeta">
+                <h2 class="h2-compacto"><i class="bi bi-layers"></i> Totales por fuente</h2>
+                <p class="subtitulo">Cuánto saldría de cada fuente de financiamiento.</p>
+                <div class="tabla-envoltura">
+                    <table class="tabla-datos">
+                        <thead>
+                        <tr>
+                            <th scope="col">Fuente</th>
+                            <th scope="col" class="centrado">Facturas</th>
+                            <th scope="col" class="monto">Total Q</th>
+                        </tr>
+                        </thead>
+                        <tbody id="totalesFuente"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================== RESULTADO DE APLICAR ===================== -->
+        <div id="resultadoAplicar" class="mt-18"></div>
+
+        <!-- ============================ APLICAR ============================ -->
+        <div class="acciones-fila pegajosa" id="barraAplicar"
+             th:hidden="${#lists.isEmpty(filas)}">
+            <button type="button" class="btn-jade" id="btnAplicar">
+                <i class="bi bi-check2-circle"></i> Aplicar y crear apartados
+            </button>
+            <span class="ayuda sin-margen" id="resumenAplicar"></span>
+        </div>
+
+    </th:block>
+
+    <!-- Datos iniciales para distribuir.js (serializados por Thymeleaf) -->
+    <script th:inline="javascript">
+        window.DISTRIBUIR = {
+            filas: /*[[${filas}]]*/ [],
+            grupos: /*[[${grupos}]]*/ [],
+            fuentes: /*[[${fuentes}]]*/ [],
+            renglones: /*[[${renglones}]]*/ [],
+            iaActiva: /*[[${iaActiva}]]*/ false,
+            mes: /*[[${mes}]]*/ null,
+            anio: /*[[${anio}]]*/ null,
+            urlClasificar: /*[[@{/dafim/presupuesto/distribuir/clasificar}]]*/ '/dafim/presupuesto/distribuir/clasificar',
+            urlAplicar: /*[[@{/dafim/presupuesto/distribuir/aplicar}]]*/ '/dafim/presupuesto/distribuir/aplicar'
+        };
+    </script>
+    <script th:src="@{/vendor/jspreadsheet/jsuites.js}"></script>
+    <script th:src="@{/vendor/jspreadsheet/jspreadsheet.js}"></script>
+    <script th:src="@{/js/distribuir.js(v=20260917a)}"></script>
+
+    <!-- Tema "Noche en Verapaz" para la hoja (usa las variables de app.css) -->
+    <style>
+        /* app.css no protege [hidden] y .rejilla/.acciones-fila fijan display */
+        #pagina [hidden] { display: none !important; }
+        #hojaDistribuir { --jexcel-border-color: var(--borde-suave); }
+        #hojaDistribuir .jexcel_container { background: transparent; color: var(--tinta); width: 100%; }
+        #hojaDistribuir .jexcel_content { max-width: 100%; }
+        #hojaDistribuir .jexcel > thead > tr > td {
+            background: var(--superficie-2); color: var(--tinta-2);
+            border-color: var(--borde-suave); font-weight: 600;
+        }
+        #hojaDistribuir .jexcel > tbody > tr > td {
+            background: transparent; color: var(--tinta); border-color: var(--borde-suave);
+        }
+        #hojaDistribuir .jexcel > tbody > tr > td.readonly {
+            background: var(--superficie-3); color: var(--tinta-2);
+        }
+        #hojaDistribuir .jexcel_corner { background: var(--jade); }
+        #hojaDistribuir .jexcel .highlight,
+        #hojaDistribuir .jexcel .highlight-selected { background: var(--jade-tenue); }
+        #hojaDistribuir .jexcel .selection,
+        #hojaDistribuir .jexcel .selection-left,
+        #hojaDistribuir .jexcel .selection-right,
+        #hojaDistribuir .jexcel .selection-top,
+        #hojaDistribuir .jexcel .selection-bottom { border-color: var(--jade); }
+        #hojaDistribuir .jexcel > tbody > tr > td > select,
+        #hojaDistribuir .jexcel .editor > input,
+        #hojaDistribuir .jexcel .editor > textarea {
+            background: var(--superficie); color: var(--tinta);
+            border: 1px solid var(--jade);
+        }
+        #hojaDistribuir .jexcel > tfoot > tr > td {
+            background: var(--superficie-2); color: var(--tinta); border-color: var(--borde-suave);
+        }
+        /* Desplegables de jsuites se montan en <body>, fuera de la hoja */
+        .jdropdown-container, .jdropdown-content, .jdropdown-header,
+        .jdropdown-default .jdropdown-header {
+            background: var(--superficie); color: var(--tinta); border-color: var(--borde-suave);
+        }
+        .jdropdown-item { color: var(--tinta); }
+        .jdropdown-item:hover, .jdropdown-item.jdropdown-selected {
+            background: var(--jade-tenue); color: var(--tinta);
+        }
+        .jcontextmenu { background: var(--superficie); border-color: var(--borde-suave); }
+        .jcontextmenu > div a, .jcontextmenu > div span { color: var(--tinta); }
+        .jcontextmenu > div:hover { background: var(--jade-tenue); }
+        /* Marca de fila sin saldo (refuerzo; el fondo va en linea via setStyle) */
+        #hojaDistribuir .jexcel > tbody > tr.fila-sin-saldo > td {
+            background: var(--rojo-tenue);
+        }
+    </style>
+
+</div>
+</body>
+</html>

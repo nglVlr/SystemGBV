@@ -443,9 +443,26 @@ public class PresupuestoService {
      */
     @Transactional(readOnly = true)
     public List<BusquedaPago> dondePagar(String consulta, BigDecimal monto) {
-        Optional<CargaPresupuesto> activa = cargaActiva();
-        if (activa.isEmpty() || consulta == null || consulta.isBlank()) {
+        if (consulta == null || consulta.isBlank()) {
             return List.of();
+        }
+        return contextoPago()
+                .map(ctx -> ctx.buscar(consulta, monto))
+                .orElse(List.of());
+    }
+
+    /**
+     * Contexto precargado de "donde pagar" para hacer varias busquedas sin
+     * recargar la BD por cada una (lo usa el asistente de distribucion, que
+     * mapea N facturas de una vez): lineas de la carga activa, nombres del
+     * catalogo de fuentes, dinero real del boletin de caja y los overlays de
+     * apartados activos. Vacio si no hay carga activa.
+     */
+    @Transactional(readOnly = true)
+    public Optional<ContextoPago> contextoPago() {
+        Optional<CargaPresupuesto> activa = cargaActiva();
+        if (activa.isEmpty()) {
+            return Optional.empty();
         }
         List<LineaPresupuesto> ls = lineas.findByCargaId(activa.get().getId());
         Map<String, String> nombres = new LinkedHashMap<>();
@@ -453,11 +470,11 @@ public class PresupuestoService {
             nombres.put(f.getCodigo(), f.getNombre() == null ? "" : f.getNombre());
         }
         List<Apartado> activos = apartadosActivos();
-        return buscarDondePagar(consulta, monto, ls, nombres,
+        return Optional.of(new ContextoPago(ls, nombres,
                 dineroRealPorFuenteYTipo(cuentasCajaActivas()),
                 apartadoPresupuestoPorClave(activos),
                 apartadoBancoPorFuenteYTipo(activos),
-                apartadoPresupuestoPorLinea(ls, activos));
+                apartadoPresupuestoPorLinea(ls, activos)));
     }
 
     /**
@@ -671,9 +688,41 @@ public class PresupuestoService {
                 montoBanco, username);
     }
 
+    /**
+     * Crea un apartado ACTIVO desde el asistente de distribucion de pagos:
+     * misma validacion que apartar(lineaId, ...) y ademas guarda la
+     * trazabilidad de la factura SAT que lo origino (facturaId) y el grupo
+     * con que se clasifico la fila. El banco queda en 0: se aparta solo
+     * presupuesto; el efectivo se asigna despues por la via manual.
+     */
+    @Transactional
+    public Apartado apartarFactura(Long lineaId, String concepto, BigDecimal montoPresupuesto,
+                                   Long facturaId, String grupo, String username) {
+        Optional<CargaPresupuesto> activa = cargaActiva();
+        if (activa.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "No hay presupuesto cargado. Sube el PDF de SICOIN en Cargas.");
+        }
+        LineaPresupuesto linea = lineas.findById(lineaId == null ? -1L : lineaId).orElse(null);
+        if (linea == null || !activa.get().getId().equals(linea.getCargaId())) {
+            throw new IllegalArgumentException(
+                    "No se encontro la linea en la carga activa. Elige de nuevo el programa.");
+        }
+        return persistirApartado(activa.get(), linea, concepto, montoPresupuesto,
+                BigDecimal.ZERO, username, facturaId, grupo);
+    }
+
     private Apartado persistirApartado(CargaPresupuesto activa, LineaPresupuesto linea,
                                        String concepto, BigDecimal montoPresupuesto,
                                        BigDecimal montoBanco, String username) {
+        return persistirApartado(activa, linea, concepto, montoPresupuesto,
+                montoBanco, username, null, null);
+    }
+
+    private Apartado persistirApartado(CargaPresupuesto activa, LineaPresupuesto linea,
+                                       String concepto, BigDecimal montoPresupuesto,
+                                       BigDecimal montoBanco, String username,
+                                       Long facturaId, String grupo) {
         lineas.lockById(linea.getId()).orElseThrow(() -> new IllegalArgumentException(
                 "No se encontro la linea " + linea.getRenglon() + " / " + linea.getFuente()
                         + " en la carga activa."));
@@ -699,6 +748,10 @@ public class PresupuestoService {
         a.setProyecto(linea.getProyecto());
         a.setActividad(linea.getActividad());
         a.setLineaId(linea.getId());
+        a.setFacturaId(facturaId);
+        String grupoLimpio = grupo == null ? "" : grupo.strip();
+        a.setGrupo(grupoLimpio.isEmpty() ? null
+                : grupoLimpio.substring(0, Math.min(20, grupoLimpio.length())));
         a.setConcepto(conceptoLimpio.length() > 200
                 ? conceptoLimpio.substring(0, 200) : conceptoLimpio);
         a.setMontoPresupuesto(montoPresupuesto.setScale(2, RoundingMode.HALF_UP));
@@ -1991,6 +2044,60 @@ public class PresupuestoService {
         public String getDescripcion() { return descripcion; }
         public BigDecimal getTotalDisponible() { return totalDisponible; }
         public List<LineaFuente> getLineas() { return lineas; }
+    }
+
+    /**
+     * Foto precargada de los insumos de "donde pagar" (lineas de la carga
+     * activa, nombres de fuente, dinero real y overlays de apartados) para
+     * buscar lineas en lote sin recargar la BD por cada consulta. La arma
+     * {@link #contextoPago()}; buscar aqui equivale a dondePagar contra esta
+     * foto.
+     */
+    public static class ContextoPago {
+        private final List<LineaPresupuesto> lineas;
+        private final Map<String, String> nombresPorFuente;
+        private final Map<String, BigDecimal> dineroRealPorFuenteYTipo;
+        private final Map<String, BigDecimal> apartadoPresPorClave;
+        private final Map<String, BigDecimal> apartadoBancoPorFuente;
+        private final Map<Long, BigDecimal> apartadoPresPorLineaId;
+
+        public ContextoPago(List<LineaPresupuesto> lineas,
+                            Map<String, String> nombresPorFuente,
+                            Map<String, BigDecimal> dineroRealPorFuenteYTipo,
+                            Map<String, BigDecimal> apartadoPresPorClave,
+                            Map<String, BigDecimal> apartadoBancoPorFuente,
+                            Map<Long, BigDecimal> apartadoPresPorLineaId) {
+            this.lineas = lineas == null ? List.of() : lineas;
+            this.nombresPorFuente = nombresPorFuente == null ? Map.of() : nombresPorFuente;
+            this.dineroRealPorFuenteYTipo = dineroRealPorFuenteYTipo == null
+                    ? Map.of() : dineroRealPorFuenteYTipo;
+            this.apartadoPresPorClave = apartadoPresPorClave == null
+                    ? Map.of() : apartadoPresPorClave;
+            this.apartadoBancoPorFuente = apartadoBancoPorFuente == null
+                    ? Map.of() : apartadoBancoPorFuente;
+            this.apartadoPresPorLineaId = apartadoPresPorLineaId == null
+                    ? Map.of() : apartadoPresPorLineaId;
+        }
+
+        /** Igual que dondePagar(consulta, monto) pero contra esta foto precargada. */
+        public List<BusquedaPago> buscar(String consulta, BigDecimal monto) {
+            return buscarDondePagar(consulta, monto, lineas, nombresPorFuente,
+                    dineroRealPorFuenteYTipo, apartadoPresPorClave,
+                    apartadoBancoPorFuente, apartadoPresPorLineaId);
+        }
+
+        public List<LineaPresupuesto> getLineas() { return lineas; }
+        public Map<String, String> getNombresPorFuente() { return nombresPorFuente; }
+        public Map<String, BigDecimal> getDineroRealPorFuenteYTipo() {
+            return dineroRealPorFuenteYTipo;
+        }
+        public Map<String, BigDecimal> getApartadoPresPorClave() { return apartadoPresPorClave; }
+        public Map<String, BigDecimal> getApartadoBancoPorFuente() {
+            return apartadoBancoPorFuente;
+        }
+        public Map<Long, BigDecimal> getApartadoPresPorLineaId() {
+            return apartadoPresPorLineaId;
+        }
     }
 
     /**

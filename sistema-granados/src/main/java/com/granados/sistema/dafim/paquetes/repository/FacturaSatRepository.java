@@ -28,6 +28,11 @@ public interface FacturaSatRepository extends JpaRepository<FacturaSat, Long> {
 
     void deleteByAnioAndMes(int anio, int mes);
 
+    /** Pares anio/mes con su numero de facturas, del mas reciente al mas viejo. */
+    @Query("select f.anio, f.mes, count(f) from FacturaSat f "
+            + "group by f.anio, f.mes order by f.anio desc, f.mes desc")
+    List<Object[]> mesesConConteo();
+
     /** Busqueda global por numero de DTE (contiene, sin importar mayusculas), mas recientes primero. */
     List<FacturaSat> findByNumeroDteContainingIgnoreCaseOrderByAnioDescMesDescIdDesc(String dte);
 

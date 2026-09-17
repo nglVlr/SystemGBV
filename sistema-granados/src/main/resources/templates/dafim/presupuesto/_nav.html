@@ -16,11 +16,12 @@
               enMes=${#strings.startsWith(u, '/dafim/presupuesto/disponibilidad')},
               enDonde=${#strings.startsWith(u, '/dafim/presupuesto/donde-pagar')},
               enApartados=${#strings.startsWith(u, '/dafim/presupuesto/apartados') or #strings.startsWith(u, '/dafim/presupuesto/apartar')},
+              enDistribuir=${#strings.startsWith(u, '/dafim/presupuesto/distribuir')},
               enTrans=${#strings.startsWith(u, '/dafim/presupuesto/transferencias')},
               enSubir=${#strings.startsWith(u, '/dafim/presupuesto/cargar')},
               enHistorial=${#strings.startsWith(u, '/dafim/presupuesto/cargas')},
               enVer=${u == '/dafim/presupuesto' or u == '/dafim/presupuesto/' or #strings.startsWith(u, '/dafim/presupuesto/renglones') or #strings.startsWith(u, '/dafim/presupuesto/fuentes') or #strings.startsWith(u, '/dafim/presupuesto/disponibilidad')},
-              enPagar=${#strings.startsWith(u, '/dafim/presupuesto/donde-pagar') or #strings.startsWith(u, '/dafim/presupuesto/transferencias') or #strings.startsWith(u, '/dafim/presupuesto/apartados') or #strings.startsWith(u, '/dafim/presupuesto/apartar')},
+              enPagar=${#strings.startsWith(u, '/dafim/presupuesto/donde-pagar') or #strings.startsWith(u, '/dafim/presupuesto/transferencias') or #strings.startsWith(u, '/dafim/presupuesto/apartados') or #strings.startsWith(u, '/dafim/presupuesto/apartar') or #strings.startsWith(u, '/dafim/presupuesto/distribuir')},
               enCargas=${#strings.startsWith(u, '/dafim/presupuesto/cargar') or #strings.startsWith(u, '/dafim/presupuesto/cargas')},
               detalleRenglon=${#strings.startsWith(u, '/dafim/presupuesto/renglones/')},
               detalleFuente=${#strings.startsWith(u, '/dafim/presupuesto/fuentes/') and !#strings.startsWith(u, '/dafim/presupuesto/fuentes/ir')}">
@@ -57,6 +58,8 @@
     <nav class="pestanias-sub" aria-label="Dentro de Pagar" th:if="${enPagar}">
         <a th:href="@{/dafim/presupuesto/donde-pagar}"
            th:classappend="${enDonde} ? 'activa'">¿Con que pago?</a>
+        <a th:href="@{/dafim/presupuesto/distribuir}"
+           th:classappend="${enDistribuir} ? 'activa'">Distribuir pagos</a>
         <a th:href="@{/dafim/presupuesto/apartados}"
            th:classappend="${enApartados} ? 'activa'">Apartados</a>
         <a th:href="@{/dafim/presupuesto/transferencias}"
