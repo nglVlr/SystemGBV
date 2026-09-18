@@ -305,6 +305,33 @@
     }
     var conteo = document.getElementById('conteoFilas');
     if (conteo) conteo.textContent = t.filas;
+
+    // Stats del hero (visibles sin bajar)
+    var clasificadas = 0;
+    var data2 = hoja ? hoja.getData() : [];
+    for (var y2 = 0; y2 < data2.length; y2++) {
+      if (data2[y2][COL.FACTURA_ID] === '' || data2[y2][COL.FACTURA_ID] == null) continue;
+      if (data2[y2][COL.GRUPO] && data2[y2][COL.RENGLON] && data2[y2][COL.FUENTE]) clasificadas++;
+    }
+    ponerTexto('statFacturas', String(t.filas));
+    ponerTexto('statMonto', dinero(t.total));
+    ponerTexto('statClasificadas', String(clasificadas));
+    ponerTexto('statSaldo', String(t.listas));
+  }
+
+  function ponerTexto(id, txt) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  }
+
+  /* Pasos del asistente: marca el activo y los ya listos. */
+  function marcarPaso(activo) {
+    for (var n = 1; n <= 3; n++) {
+      var paso = document.getElementById('paso' + n);
+      if (!paso) continue;
+      paso.classList.toggle('activo', n === activo);
+      paso.classList.toggle('listo', n < activo);
+    }
   }
 
   function contarPor(col, valor) {
@@ -371,21 +398,21 @@
     var creada = window.jspreadsheet(contenedor, {
       data: datosIniciales(),
       columns: [
-        { title: '#', type: 'numeric', readOnly: true, width: 48, align: 'center' },
-        { title: 'Descripción', type: 'text', readOnly: true, width: 300 },
-        { title: 'Emisor', type: 'text', readOnly: true, width: 170 },
-        { title: 'Monto', type: 'numeric', readOnly: true, width: 110, mask: 'Q #,##0.00', align: 'right' },
-        { title: 'Grupo', type: 'dropdown', width: 160, source: CFG.grupos || [] },
-        { title: 'Renglón', type: 'dropdown', width: 210, source: opcionesRenglon(), autocomplete: true },
-        { title: 'Fuente', type: 'dropdown', width: 230, source: opcionesFuente(), autocomplete: true },
-        { title: 'Saldo', type: 'text', readOnly: true, width: 64, align: 'center' },
-        { title: 'Explicación IA', type: 'text', readOnly: true, width: 260 },
+        { title: '#', type: 'numeric', readOnly: true, width: 44, align: 'center' },
+        { title: 'Descripción', type: 'text', readOnly: true, width: 240 },
+        { title: 'Emisor', type: 'text', readOnly: true, width: 140 },
+        { title: 'Monto', type: 'numeric', readOnly: true, width: 100, mask: 'Q #,##0.00', align: 'right' },
+        { title: 'Grupo', type: 'dropdown', width: 135, source: CFG.grupos || [] },
+        { title: 'Renglón', type: 'dropdown', width: 170, source: opcionesRenglon(), autocomplete: true },
+        { title: 'Fuente', type: 'dropdown', width: 180, source: opcionesFuente(), autocomplete: true },
+        { title: 'Saldo', type: 'text', readOnly: true, width: 54, align: 'center' },
+        { title: 'Explicación IA', type: 'text', readOnly: true, width: 190 },
         { title: 'facturaId', type: 'hidden' },
         { title: 'lineaId', type: 'hidden' },
         { title: 'saldoSuficiente', type: 'hidden' }
       ],
       tableOverflow: true,
-      tableHeight: '520px',
+      tableHeight: '480px',
       defaultColAlign: 'left',
       columnSorting: false,
       rowDrag: false,
@@ -447,6 +474,7 @@
       }
       if (estado) estado.textContent = 'Clasificación lista. Puedes ajustar cualquier fila.';
       clasificando = false;
+      marcarPaso(2);
       botonLibre(btn, '<i class="bi bi-stars"></i> Clasificar con IA');
       if (btnAplicar) btnAplicar.disabled = false;
     }, function (msg) {
@@ -520,6 +548,7 @@
         pintarSaldos();
         pintarTotales();
         sincronizarVisibilidad();
+        if (creados > 0) marcarPaso(3);
 
         aplicando = false;
         botonLibre(btn, '<i class="bi bi-check2-circle"></i> Aplicar y crear apartados');
@@ -587,4 +616,5 @@
 
   iniciarSelectorMes();
   iniciarHoja();
+  marcarPaso(1);
 })();
