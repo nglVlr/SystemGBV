@@ -6,6 +6,7 @@ import com.granados.sistema.dafim.compras.util.Constantes;
 import com.granados.sistema.dafim.compras.util.TextoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,7 @@ public class GeminiService {
     private final Duration timeout;
     private final ObjectMapper mapper = new ObjectMapper();
 
+    @Autowired
     public GeminiService(@Value("${gemini.api-key:}") String apiKey,
                          @Value("${gemini.model:gemini-2.0-flash}") String model) {
         this(apiKey, model,
